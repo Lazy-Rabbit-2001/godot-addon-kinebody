@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://difgppg3fikqr"]
+
+[ext_resource type="Script" path="res://kine_body_2d.gd" id="1_bo37w"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mbr6m"]
+size = Vector2(32, 32)
+
+[node name="Node2D" type="Node2D"]
+
+[node name="KineBody2D" type="CharacterBody2D" parent="."]
+position = Vector2(240, 208)
+script = ExtResource("1_bo37w")
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2D"]
+shape = SubResource("RectangleShape2D_mbr6m")
