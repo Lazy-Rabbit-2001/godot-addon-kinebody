@@ -1,19 +1,24 @@
 using Godot;
 using System;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace GodotKineBody;
 
 /// <summary>
-/// C# Edition of <see cref="KineBody2D"/>.<br/>
+/// C# edition of <c>KineBody2D</c>.<br/>
+/// <b>Note:</b> During the high consumption of the <c>CharacterBody2D.MoveAndSlide()</c>, it is not couraged to run with the overnumbered use of <c>KineBody2DCs</c>.
 /// </summary>
+
+[Tool]
 [GlobalClass, Icon("res://addons/kinebody/kinebody2d/KineBody2DCs.svg")]
 public partial class KineBody2DCs : CharacterBody2D
 {
     /// <summary>
-    /// Definitions about the transformation method on <c>MotionVector"</c>.<br/>
-    /// <c>MotionVectorDirectionUpDirection</c>: The direction of the <c>MotionVector"</c> equals to <c>UpDirection.Rotated(Math.PI / 2.0d)</c>.<br/>
-    /// <c>MotionVectorDirectionGlobalRotation</c>: The direction of the <c>MotionVector"</c> is rotated by <c>GlobalRotation</c>.<br/>
-    /// <c>MotionVectorDirectionDefault</c>: The <c>MotionVector"</c> is an alternative identifier of <c>CharacterBody2D.Velocity</c>.
+    /// Definitions about the transformation method on <c>MotionVector</c>.<br/>
+    /// <c>MotionVectorDirectionUpDirection</c>: The direction of the <c>MotionVector</c> equals to <c>UpDirection.Rotated(Math.PI / 2.0d)</c>.<br/>
+    /// <c>MotionVectorDirectionGlobalRotation</c>: The direction of the <c>MotionVector</c> is rotated by <c>GlobalRotation</c>.<br/>
+    /// <c>MotionVectorDirectionDefault</c>: The <c>MotionVector</c> is an alternative identifier of <c>CharacterBody2D.Velocity</c>.
     /// </summary>
     /// <seealso cref="MotionVector"/>
     public enum MotionVectorDirectionEnum
@@ -22,6 +27,22 @@ public partial class KineBody2DCs : CharacterBody2D
         GlobalRotation,
         Default,
     }
+
+    /// <summary>
+    /// Emitted when the body collides with the side of the other body.
+    /// </summary>
+    [Signal]
+    public delegate void CollidedWallEventHandler();
+    /// <summary>
+    /// Emitted when the body collides with the bottom of the other body.
+    /// </summary>
+    [Signal]
+    public delegate void CollidedCeilingEventHandler();
+    /// <summary>
+    /// Emitted when the body collides with the top of the other body
+    /// </summary>
+    [Signal]
+    public delegate void CollidedFloorEventHandler();
 
     /// <summary>
     /// The mass of the body, which will affect the impulse that will be applied to the body.
@@ -34,12 +55,12 @@ public partial class KineBody2DCs : CharacterBody2D
         set => PhysicsServer2D.BodySetParam(GetRid(), PhysicsServer2D.BodyParameter.Mass, Mathf.Max(0.001d, value));
     }
     /// <summary>
-    /// 
+    /// The option that defines which transformation method will be applied to <c>motion_vector</c>.
     /// </summary>
     [Export]
     public MotionVectorDirectionEnum MotionVectorDirection { get; set; } = MotionVectorDirectionEnum.UpDirection;
     /// <summary>
-    /// 
+    /// The <c>CharacterBody2D.velocity</c> of the body, transformed by a specific method defined by <c>motion_vector_direction</c>.
     /// </summary>
     [Export(PropertyHint.None, "suffix:px/s")]
     public Vector2 MotionVector
@@ -48,22 +69,23 @@ public partial class KineBody2DCs : CharacterBody2D
         set => SetMotionVector(value);
     }
     /// <summary>
-    /// 
+    /// The scale of the gravity acceleration. The actual gravity acceleration is calculated as <c>gravity_scale * get_gravity</c>.
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 999.0, 0.1, or_greater, hide_slider, suffix:x")]
     public double GravityScale { get; set; } = 1.0d;
     /// <summary>
-    /// 
+    /// The maximum of falling speed. If set to <c>0</c>, there will be no limit on maximum falling speed and the body will keep falling faster and faster.
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 12500.0, 0.1, or_greater, hide_slider, suffix:px/s")]
     public double MaxFallingSpeed { get; set; } = 1500.0d;
-    [ExportGroup("Rotation", "Rotation")]
     /// <summary>
-    /// 
+    /// Duration of the rotation synchronization. See <c>SynchronizeGlobalRotationToUpDirection()</c>
     /// </summary>
+    [ExportGroup("Rotation", "Rotation")]
     [Export(PropertyHint.Range, "0.0, 999.0, 0.1, or_greater, hide_slider, suffix:s")]
-    public double RotationSynchronizingDuration = 0.1d;
+    public double RotationSynchronizingDuration { get; set; } = 0.1d;
 
+    // Tween for the rotation synchronization.
     private Tween _rotationSynchronizingTween;
 
 
@@ -72,6 +94,7 @@ public partial class KineBody2DCs : CharacterBody2D
         return Engine.IsInPhysicsFrame() ? GetPhysicsProcessDeltaTime() : GetProcessDeltaTime();
     }
 
+#region == Main physics methods ==
     /// <summary>
     /// Moves the kine body instance.<br/><br/>
     /// The <c>speedScale</c> will affect the final motion, while the <c>globalRotationSyncUpDirection</c> will synchronize <c>Node2D.GlobalRotation</c> to <c>CharacterBody2D.UpDirection</c> by calling <c>SynchronizeGlobalRotationToUpDirection()</c>.
@@ -92,7 +115,7 @@ public partial class KineBody2DCs : CharacterBody2D
         }
 
         // Applying gravity
-        if (!IsOnFloor() && GravityScale > 0.0d) {
+        if (GravityScale > 0.0d) {
             Velocity += g * (float)(GravityScale * GetDelta());
             var fV = Velocity.Project(gDir);
             if (MaxFallingSpeed > 0.0d && !Mathf.IsNaN(fV.X) && !Mathf.IsNaN(fV.Y) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
@@ -102,7 +125,7 @@ public partial class KineBody2DCs : CharacterBody2D
 
         // Synchronizing global rotation to up direction
         if (globalRotationSyncUpDirection) {
-            GlobalRotation = UpDirection.Angle();
+            _ = SynchronizeGlobalRotationToUpDirection();
         }
         
         // Applying speed scale
@@ -110,6 +133,20 @@ public partial class KineBody2DCs : CharacterBody2D
         Velocity *= speedScale;
         var ret = MoveAndSlide();
         Velocity = tmpV;
+
+        // Handling signal emissions
+        if (ret) {
+            if (IsOnWall()) {
+                EmitSignal(SignalName.CollidedWall);
+            }
+            if (IsOnCeiling()) {
+                EmitSignal(SignalName.CollidedCeiling);
+            }
+            if (IsOnFloor()) {
+                EmitSignal(SignalName.CollidedFloor);
+            }
+        }
+
         return ret;
     }
 
@@ -118,7 +155,7 @@ public partial class KineBody2DCs : CharacterBody2D
     /// that is to say, the global rotation of the body will be synchronized to <c>UpDirection.Angle() + Math.PI / 2.0d</c>.<br/><br/>
     /// <b>Note:</b> This is achieved by creating an object <c>Tween</c>, which may take more space of memory. Make sure to call this method within certain instances.
     /// </summary>
-    public async void SynchronizeGlobalRotationToUpDirection()
+    public async Task SynchronizeGlobalRotationToUpDirection()
     {
         if (MotionMode != MotionModeEnum.Grounded) {
             return; // Non-ground mode does not support `up_direction`.
@@ -129,7 +166,7 @@ public partial class KineBody2DCs : CharacterBody2D
         } else if (_rotationSynchronizingTween == null) {
             // Creating a new tween for the rotation synchronization.
             _rotationSynchronizingTween = CreateTween().SetTrans(Tween.TransitionType.Sine);
-            _rotationSynchronizingTween.TweenProperty(this, (NodePath)"GlobalRotation", targetRotation, RotationSynchronizingDuration);
+            _rotationSynchronizingTween.TweenProperty(this, (NodePath)"global_rotation", targetRotation, RotationSynchronizingDuration);
             // Waiting for the tween to finish.
             await ToSignal(_rotationSynchronizingTween, Tween.SignalName.Finished);
             // Clearing the tween reference to avoid memory leak.
@@ -137,8 +174,9 @@ public partial class KineBody2DCs : CharacterBody2D
             _rotationSynchronizingTween = null;
         }
     }
+#endregion
 
-#region == Setters and Getters ==
+#region == Setters and getters ==
     private void SetMotionVector(Vector2 value)
     {
         switch (MotionVectorDirection) {
@@ -166,6 +204,24 @@ public partial class KineBody2DCs : CharacterBody2D
                 break;
         }
         return Velocity;
+    }
+#endregion
+
+#region == Property settings ==
+    public override bool _PropertyCanRevert(StringName property)
+    {
+        if (property == (StringName)"Mass") {
+            return true;
+        }
+        return base._PropertyCanRevert(property);
+    }
+
+    public override Variant _PropertyGetRevert(StringName property)
+    {
+        if (property == (StringName)"Mass") {
+            return 1.0d;
+        }
+        return base._PropertyGetRevert(property);
     }
 #endregion
 }

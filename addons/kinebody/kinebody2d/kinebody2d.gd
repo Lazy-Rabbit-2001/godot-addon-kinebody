@@ -4,7 +4,7 @@ extends CharacterBody2D
 
 ## A type of [CharacterBody2D] specific to the development of platform games.
 ##
-##
+## [b]Note:[/b] During the high consumption of the [method CharacterBody2D.move_and_slide], it is not couraged to run with the overnumbered use of [KineBody2D].
 
 ## Definitions about the transformation method on [member motion_vector].
 enum MotionVectorDirection {
@@ -12,6 +12,13 @@ enum MotionVectorDirection {
 	GLOBAL_ROTATION, ## The direction of the [member motion_vector] is rotated by [member Node2D.global_rotation].
 	DEFAULT, ## The [member motion_vector] is an alternative identifier of [member CharacterBody2D.velocity].
 }
+
+## Emitted when the body collides with the side of the other body.
+signal collided_wall
+## Emitted when the body collides with the bottom of the other body.
+signal collided_ceiling
+## Emitted when the body collides with the top of the other body.
+signal collided_floor
 
 ## The mass of the body, which will affect the impulse that will be applied to the body.
 @export_range(0.1, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
@@ -40,29 +47,31 @@ enum MotionVectorDirection {
 		return velocity
 ## The scale of the gravity acceleration. The actual gravity acceleration is calculated as [code]gravity_scale * get_gravity[/code].
 @export_range(0.0, 999.0, 0.1, "or_greater", "hide_slider", "suffix:x") var gravity_scale: float = 1.0
-## The maximum
+## The maximum of falling speed. If set to [code]0[/code], there will be no limit on maximum falling speed and the body will keep falling faster and faster.
 @export_range(0.0, 12500.0, 0.1, "or_greater", "hide_slider", "suffix:px/s") var max_falling_speed: float = 1500.0
 @export_group("Rotation", "rotation_")
+## Duration of the rotation synchronization. See [method synchronize_global_rotation_to_up_direction].
 @export_range(0.0, 10.0, 0.1, "or_greater", "hide_slider", "suffix:s") var rotation_synchronizing_duration: float = 0.1
 
+## Tween for the rotation synchronization.
 var __rotation_synchronizing_tween: Tween
 
 
+#region == main physics methods ==
 ## Moves the kine body instance and returns [code]true[/code] when it collides with other physics bodies.[br][br]
 ## The [param speed_scale] will affect the final motion, 
 ## while the [param global_rotation_sync_up_direction] will synchronize [member Node2D.global_rotation] to [member CharacterBody2D.up_direction] by calling [method synchronize_global_rotation_to_up_direction].
 func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: bool = true) -> bool:
-	# In general build, using inner class
 	var g := get_gravity()
 	var gdir := g.normalized()
 	
 	# `up_direction` will not work in floating mode
 	if motion_mode == MotionMode.MOTION_MODE_GROUNDED:
 		if gdir != Vector2(NAN, NAN) and not gdir.is_zero_approx():
-			up_direction = gdir
+			up_direction = -gdir
 	
 	# Applying gravity
-	if not is_on_floor() and gravity_scale > 0.0:
+	if gravity_scale > 0.0:
 		velocity += g * gravity_scale * __get_delta()
 		var fv := velocity.project(gdir) # Falling velocity
 		if max_falling_speed > 0.0 and fv != Vector2(NAN, NAN) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
@@ -77,6 +86,16 @@ func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: 
 	velocity *= speed_scale
 	var ret := move_and_slide()
 	velocity = tmp_v
+
+	# Handling signal emissions
+	if ret:
+		if is_on_wall():
+			collided_wall.emit()
+		if is_on_ceiling():
+			collided_ceiling.emit()
+		if is_on_floor():
+			collided_floor.emit()
+
 	return ret
 
 ## Synchronizes [member Node2D.global_rotation] to [member CharacterBody2D.up_direction],
@@ -91,12 +110,13 @@ func synchronize_global_rotation_to_up_direction() -> void:
 	elif not __rotation_synchronizing_tween:
 		# Creating a new tween for rotation synchronization.
 		__rotation_synchronizing_tween = create_tween().set_trans(Tween.TRANS_SINE)
-		__rotation_synchronizing_tween.tween_property(self, ^"global_position", target_rotation, rotation_synchronizing_duration)
+		__rotation_synchronizing_tween.tween_property(self, ^"global_rotation", target_rotation, rotation_synchronizing_duration)
 		# Waiting for the tween to finish.
 		await __rotation_synchronizing_tween.finished
 		# Clearing the tween reference to avoid memory leak.
 		__rotation_synchronizing_tween.kill()
 		__rotation_synchronizing_tween = null
+#endregion
 
 
 # Returns the time delta used in physics or idle iteration.
