@@ -3,7 +3,7 @@
     "markdownlint.config": {
         "default": true,
         "MD033": {
-            "allowed_elements": [ "font", "li", "table", "tr", "td", "center", "img", "p" ]
+            "allowed_elements": [ "font", "li", "table", "tr", "td", "center", "img", "p", "div" ]
         }
       },
 }
