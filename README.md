@@ -1,4 +1,6 @@
-# Godot Addon - KineBody
+# <center> Godot Addon - KineBody</center>
+
+<center>![logo](addons\kinebody\kinebody2d\KineBody2D.svg)</center>
 
 This is a Godot addon that provides `KineBody2D` and `KineBody3D`(WIP) nodes, which may improve your development of platform games.
 

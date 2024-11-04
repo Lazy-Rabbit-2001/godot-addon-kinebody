@@ -1,3 +1,9 @@
 {
-    "godotTools.editorPath.godot4": "d:\\Programs\\Godot\\stable\\Godot.exe"
+    "godotTools.editorPath.godot4": "d:\\Programs\\Godot\\stable\\Godot.exe",
+    "markdownlint.config": {
+        "default": true,
+        "MD033": {
+            "allowed_elements": [ "font", "li", "table", "tr", "td", "center", "img", "p" ]
+        }
+      },
 }
