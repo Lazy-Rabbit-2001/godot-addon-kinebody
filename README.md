@@ -1,6 +1,6 @@
 # Godot Addon - KineBody
 
-<div align=center><img src="logo.svg" ""></div>
+<div align=center><img src="logo.svg" "" height="75%" width="75%"></div>
 
 This is a Godot addon that provides `KineBody2D` and `KineBody3D`(WIP) nodes, which may improve your development of platform games.
 
@@ -76,7 +76,7 @@ They are emitted respectively when the corresponding collision event is invoked.
 
 #### WIP
 
-## Used fonts in Logo:
+## Used fonts in logo
 
 * Cyberion Demo
 * Dunkin Sans
@@ -84,3 +84,5 @@ They are emitted respectively when the corresponding collision event is invoked.
 ## Credits
 
 * 悠鱼/咸鱼·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
+* Letterhend Studio: Designer of the font Cyberion Demo.
+* Neale Davidson: Designer of the font Dunkin Sans.
