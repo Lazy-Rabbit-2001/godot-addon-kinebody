@@ -1,6 +1,6 @@
 # Godot Addon - KineBody
 
-<div align=center><img src="logo.svg" "" height="20%" width="20%"></div>
+<div align=center><img src="logo.svg" ""></div>
 
 This is a Godot addon that provides `KineBody2D` and `KineBody3D`(WIP) nodes, which may improve your development of platform games.
 
@@ -75,3 +75,12 @@ They are emitted respectively when the corresponding collision event is invoked.
 ### General physics methods
 
 #### WIP
+
+## Used fonts in Logo:
+
+* Cyberion Demo
+* Dunkin Sans
+
+## Credits
+
+* 悠鱼/咸鱼·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
