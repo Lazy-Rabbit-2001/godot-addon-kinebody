@@ -10,7 +10,7 @@ namespace GodotKineBody;
 /// </summary>
 
 [Tool]
-[GlobalClass, Icon("res://addons/kinebody/kinebody2d/KineBody2DCs.svg")]
+[GlobalClass, Icon("res://addons/kinebody/kinebody2d/kinebody2d_csharp.svg")]
 public partial class KineBody2DCs : CharacterBody2D
 {
     /// <summary>

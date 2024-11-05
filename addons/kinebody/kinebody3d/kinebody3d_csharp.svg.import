@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dxc76xcp5ki4"
-path="res://.godot/imported/kinebody2d.svg-7dc39f79ef5812a78a88f37f5eae934c.ctex"
+uid="uid://bci1utwimcgbc"
+path="res://.godot/imported/kinebody3d_csharp.svg-60f8aab339b6dce958c56b8e160aa013.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/kinebody/kinebody2d/kinebody2d.svg"
-dest_files=["res://.godot/imported/kinebody2d.svg-7dc39f79ef5812a78a88f37f5eae934c.ctex"]
+source_file="res://addons/kinebody/kinebody3d/kinebody3d_csharp.svg"
+dest_files=["res://.godot/imported/kinebody3d_csharp.svg-60f8aab339b6dce958c56b8e160aa013.ctex"]
 
 [params]
 

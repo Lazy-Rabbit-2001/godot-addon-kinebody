@@ -1,4 +1,4 @@
-@icon("./KineBody2D.svg")
+@icon("./kinebody2d.svg")
 class_name KineBody2D
 extends CharacterBody2D
 
