@@ -1,6 +1,5 @@
 using Godot;
 using System;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace GodotKineBody;
@@ -85,8 +84,8 @@ public partial class KineBody2DCs : CharacterBody2D
     [Export(PropertyHint.Range, "0.0, 999.0, 0.1, or_greater, hide_slider, suffix:s")]
     public double RotationSynchronizingDuration { get; set; } = 0.1d;
 
-    // Tween for the rotation synchronization.
-    private Tween _rotationSynchronizingTween;
+    private Vector2 _prevVelocity; // Velocity in previous frame.
+    private Tween _rotationSynchronizingTween; // Tween for the rotation synchronization.
 
 
     private double GetDelta()
@@ -174,6 +173,116 @@ public partial class KineBody2DCs : CharacterBody2D
             _rotationSynchronizingTween = null;
         }
     }
+#endregion
+
+#region == Helper physics methods ==
+    /// <summary>
+    /// Accelerates the body by the given <c>acceleration</c>.
+    /// </summary>
+    /// <param name="acceleration"></param>
+    public void Accelerate(Vector2 acceleration) => Velocity += acceleration;
+    /// <summary>
+    /// Accelerates the body to the target velocity by the given <c>acceleration</c>.
+    /// </summary>
+    /// <param name="acceleration"></param>
+    /// <param name="to"></param>
+    public void AccelerateTo(float acceleration, Vector2 to) => Velocity = Velocity.MoveToward(to, acceleration);
+    /// <summary>
+    /// Applies the given <c>momentum</c> to the body.<br/><br/>
+    /// Momentum is a vector that represents the multiplication of mass and velocity, so the more momentum applied, the faster the body will move.
+    /// However, the more mass the body has, the less velocity it will have, with the same momentum applied.<br/><br/>
+    /// For platform games, the momentum is manipulated more suitable than the force.
+    /// </summary>
+    /// <param name="momentum"></param>
+    public void ApplyMomentum(Vector2 momentum) => Velocity += momentum / (float)Mass;
+    /// <summary>
+    /// Sets the momentum of the body to the given <c>momentum</c>. See <c>ApplyMomentum()</c> for details about what is momentum.
+    /// </summary>
+    /// <param name="momentum"></param>
+    public void SetMomentum(Vector2 momentum) => Velocity = momentum / (float)Mass;
+    /// <summary>
+    /// Returns the momentum of the body. See <c>ApplyMomentum()</c> for details about what is momentum.
+    /// </summary>
+    /// <returns></returns>
+    public Vector2 GetMomentum() => Velocity * (float)Mass;
+    /// <summary>
+    /// Adds the motion vector by given acceleration.
+    /// </summary>
+    /// <param name="addedMotionVector"></param>
+    public void AddMotionVector(Vector2 addedMotionVector) => MotionVector += addedMotionVector;
+    /// <summary>
+    /// Adds the motion vector to the target motion vector by given acceleration.
+    /// </summary>
+    /// <param name="addedMotionVector"></param>
+    /// <param name="to"></param>
+    public void AddMotionVectorTo(float addedMotionVector, Vector2 to) => MotionVector = MotionVector.MoveToward(to, addedMotionVector);
+    /// <summary>
+    /// Adds the <c>X</c> component of the motion vector by given acceleration to the target value.
+    /// This is useful for fast achieving walking acceleration of a character's.
+    /// </summary>
+    /// <param name="addedXSpeed"></param>
+    /// <param name="to"></param>
+    public void AddMotionVectorXSpeedTo(float addedXSpeed, float to) => MotionVector = MotionVector with { X = Mathf.MoveToward(MotionVector.X, to, addedXSpeed) };
+    /// <summary>
+    /// Adds the <c>Y</c> component of the motion vector by given acceleration to the target value.
+    /// This is useful for fast achieving jumping or falling acceleration of a character.
+    /// </summary>
+    /// <param name="addedYSpeed"></param>
+    /// <param name="to"></param>
+    public void AddMotionVectorYSpeedTo(float addedYSpeed, float to) => MotionVector = MotionVector with { Y = Mathf.MoveToward(MotionVector.Y, to, addedYSpeed) };
+    /// <summary>
+    /// Returns the friction the body receives when it is on the floor.<br/><br/>
+    /// <b>Note:</b> This method is a bit performance-consuming, as it uses <c>PhysicsBody2D.TestMove()</c>, which takes a bit more time to get the result. Be careful when using it frequently, if you are caring about performance.
+    /// </summary>
+    public double GetFloorFriction()
+    {
+        if (!IsOnFloor()) {
+            return 0.0d;
+        };
+
+        var friction = 0.0d;
+        var kc = new KinematicCollision2D();
+        TestMove(GlobalTransform, -GetFloorNormal(), kc);
+        if (kc != null && kc.GetCollider() != null) {
+            return (double)PhysicsServer2D.BodyGetParam(kc.GetColliderRid(), PhysicsServer2D.BodyParameter.Friction);
+        }
+
+        return friction;
+    }
+    /// <summary>
+    /// Returns the velocity in previous frame.
+    /// </summary>
+    /// <returns></returns>
+    public Vector2 GetPreviousVelocity() => _prevVelocity;
+#endregion
+
+#region == Platform game (wrapper) methods ==
+    /// <summary>
+    /// Makes the body jump along the up direction with the given <c>jumpingSpeed</c>.
+    /// If <c>accumulating</c> is <c>true</c>, the <c>jumpingSpeed</c> will be added to the velocity directly. Otherwise, the component of the velocity along the up direction will be set to <c>jumpingSpeed</c>.
+    /// </summary>
+    /// <param name="jumpingSpeed"></param>
+    /// <param name="accumulating"></param>
+    public void Jump(float jumpingSpeed, bool accumulating = false) => Velocity += accumulating ? UpDirection * jumpingSpeed : -Velocity.Project(UpDirection) + UpDirection * jumpingSpeed;
+    /// <summary>
+    /// Reverses the velocity of the body, as if the body collided with a wall whose edge is parallel to the up direction of the body.
+    /// </summary>
+    public void TurnBackWalk() => Velocity = _prevVelocity.IsZeroApprox() ? Velocity.Reflect(UpDirection) : _prevVelocity.Reflect(UpDirection);
+    /// <summary>
+    /// Reverses the velocity of the body, as if the body collided with a ceiling or floor whose bottom or top is perpendicular to the up direction of the body.
+    /// </summary>
+    public void BounceJumpingFalling() => Velocity = _prevVelocity.IsZeroApprox() ? Velocity.Bounce(UpDirection) : _prevVelocity.Bounce(UpDirection);
+    /// <summary>
+    /// A wrapper method of <c>AddMotionVectorXSpeedTo()</c> for the convenience of platform games.
+    /// </summary>
+    /// <param name="acceleration"></param>
+    /// <param name="to"></param>
+    public void WalkingSpeedUp(float acceleration, float to) => AddMotionVectorXSpeedTo(acceleration, to);
+    /// <summary>
+    /// A wrapper method of <c>AddMotionVectorXSpeedTo()</c>, while the parameter <c>to></c> is always <c>0</c>, for the convenience of platform games.
+    /// </summary>
+    /// <param name="deceleration"></param>
+    public void WalkingSlowDownToZero(float deceleration) => AddMotionVectorXSpeedTo(deceleration, 0.0f);
 #endregion
 
 #region == Setters and getters ==
