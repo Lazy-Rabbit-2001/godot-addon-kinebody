@@ -77,16 +77,16 @@ public partial class KineBody2DCs : CharacterBody2D
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 12500.0, 0.1, or_greater, hide_slider, suffix:px/s")]
     public double MaxFallingSpeed { get; set; } = 1500.0d;
-    /// <summary>
-    /// Duration of the rotation synchronization. See <c>SynchronizeGlobalRotationToUpDirection()</c>
-    /// </summary>
-    [ExportGroup("Rotation", "Rotation")]
-    [Export(PropertyHint.Range, "0.0, 999.0, 0.1, or_greater, hide_slider, suffix:s")]
-    public double RotationSynchronizingDuration { get; set; } = 0.1d;
 
     private Vector2 _prevVelocity; // Velocity in previous frame.
-    private Tween _rotationSynchronizingTween; // Tween for the rotation synchronization.
 
+    public KineBody2DCs()
+    {
+#if TOOL_RUNNING_IN_EDITOR
+        if (!Engine.IsEditorHint()) {
+        }
+#endif
+    }
 
     private double GetDelta()
     {
@@ -124,14 +124,13 @@ public partial class KineBody2DCs : CharacterBody2D
 
         // Synchronizing global rotation to up direction
         if (globalRotationSyncUpDirection) {
-            _ = SynchronizeGlobalRotationToUpDirection();
+            SynchronizeGlobalRotationToUpDirection();
         }
         
         // Applying speed scale
-        var tmpV = Velocity;
         Velocity *= speedScale;
         var ret = MoveAndSlide();
-        Velocity = tmpV;
+        Velocity /= speedScale;
 
         // Handling signal emissions
         if (ret) {
@@ -151,27 +150,14 @@ public partial class KineBody2DCs : CharacterBody2D
 
     /// <summary>
     /// Synchronizes <c>Node2D.GlobalRotation</c> to <c>CharacterBody2D.UpDirection</c>,
-    /// that is to say, the global rotation of the body will be synchronized to <c>UpDirection.Angle() + Math.PI / 2.0d</c>.<br/><br/>
-    /// <b>Note:</b> This is achieved by creating an object <c>Tween</c>, which may take more space of memory. Make sure to call this method within certain instances.
+    /// that is to say, the global rotation of the body will be synchronized to the result of <c>GetUpDirectionRotationOrthogonal()</c>.
     /// </summary>
-    public async Task SynchronizeGlobalRotationToUpDirection()
+    public void SynchronizeGlobalRotationToUpDirection()
     {
         if (MotionMode != MotionModeEnum.Grounded) {
             return; // Non-ground mode does not support `up_direction`.
         }
-        var targetRotation = UpDirection.Angle() + Math.PI / 2.0d;
-        if (Mathf.IsEqualApprox(GlobalRotation, targetRotation)) {
-            GlobalRotation = (float)targetRotation;
-        } else if (_rotationSynchronizingTween == null) {
-            // Creating a new tween for the rotation synchronization.
-            _rotationSynchronizingTween = CreateTween().SetTrans(Tween.TransitionType.Sine);
-            _rotationSynchronizingTween.TweenProperty(this, (NodePath)"global_rotation", targetRotation, RotationSynchronizingDuration);
-            // Waiting for the tween to finish.
-            await ToSignal(_rotationSynchronizingTween, Tween.SignalName.Finished);
-            // Clearing the tween reference to avoid memory leak.
-            _rotationSynchronizingTween.Kill();
-            _rotationSynchronizingTween = null;
-        }
+        GlobalRotation = (float) GetUpDirectionRotationOrthogonal();
     }
 #endregion
 
@@ -285,6 +271,23 @@ public partial class KineBody2DCs : CharacterBody2D
     public void WalkingSlowDownToZero(float deceleration) => AddMotionVectorXSpeedTo(deceleration, 0.0f);
 #endregion
 
+#region == Helper methods ==
+    /// <summary>
+    /// Returns the angle of the up direction rotated by [code]PI / 2.0[/code].
+    /// </summary>
+    /// <returns></returns>
+    public float GetUpDirectionRotationOrthogonal() => UpDirection.AngleTo(Vector2.Up);
+#endregion
+
+#region == Cross-dimensional methods ==
+    /// <summary>
+    /// Converts the unit of the given value from pixels to meters.
+    /// </summary>
+    /// <param name="pixels"></param>
+    /// <returns></returns>
+    public static double PixelsToMeters(double pixels) => pixels * 3779.527559d;
+#endregion
+
 #region == Setters and getters ==
     private void SetMotionVector(Vector2 value)
     {
@@ -293,7 +296,7 @@ public partial class KineBody2DCs : CharacterBody2D
                 Velocity = value;
                 break;
             case MotionVectorDirectionEnum.UpDirection:
-                Velocity = value.Rotated((float)(UpDirection.Angle() + Math.PI / 2.0d));
+                Velocity = value.Rotated(GetUpDirectionRotationOrthogonal());
                 break;
             case MotionVectorDirectionEnum.GlobalRotation:
                 Velocity = value.Rotated(GlobalRotation);
@@ -306,7 +309,7 @@ public partial class KineBody2DCs : CharacterBody2D
     {
         switch (MotionVectorDirection) {
             case MotionVectorDirectionEnum.UpDirection:
-                return Velocity.Rotated((float)(-UpDirection.Angle() - Math.PI / 2.0d));
+                return Velocity.Rotated(-GetUpDirectionRotationOrthogonal());
             case MotionVectorDirectionEnum.GlobalRotation:
                 return Velocity.Rotated(-GlobalRotation);
             default:

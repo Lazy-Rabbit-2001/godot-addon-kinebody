@@ -11,9 +11,7 @@ public partial class TestKineBody2DCs : KineBody2DCs
         if (Engine.IsEditorHint()) {
             return;
         }
-        var t = Time.GetTicksUsec();
         MoveKineBody();
         base._PhysicsProcess(delta);
-        GD.Print(Time.GetTicksUsec() - t);
     }
 }

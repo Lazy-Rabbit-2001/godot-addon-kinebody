@@ -1,0 +1,82 @@
+[gd_scene load_steps=11 format=3 uid="uid://cws08vddfl3rn"]
+
+[ext_resource type="Script" path="res://kine_body_3d.gd" id="1_krlxo"]
+[ext_resource type="Script" path="res://camera_3d.gd" id="1_x3leg"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_bxcsr"]
+sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+ground_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
+
+[sub_resource type="Sky" id="Sky_2855u"]
+sky_material = SubResource("ProceduralSkyMaterial_bxcsr")
+
+[sub_resource type="Environment" id="Environment_xw8cx"]
+background_mode = 2
+sky = SubResource("Sky_2855u")
+tonemap_mode = 2
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hl4l2"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_7k4cm"]
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_bv7uq"]
+radius = 60.0
+
+[sub_resource type="SphereMesh" id="SphereMesh_fx5nj"]
+radius = 10.0
+height = 20.0
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_5t4yk"]
+radius = 10.0
+
+[node name="Main3D" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_xw8cx")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+shadow_enabled = true
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 12.4914, 20.2189)
+fov = 50.0
+script = ExtResource("1_x3leg")
+
+[node name="KineBody3D" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.9323, 0)
+collision_mask = 2
+script = ExtResource("1_krlxo")
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KineBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+shape = SubResource("CapsuleShape3D_hl4l2")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+mesh = SubResource("CapsuleMesh_7k4cm")
+
+[node name="Area3D" type="Area3D" parent="."]
+rotation_edit_mode = 1
+collision_layer = 0
+gravity_space_override = 3
+gravity_point = true
+gravity_point_center = Vector3(0, 0, 0)
+gravity_direction = Vector3(0, 0, 0)
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("SphereShape3D_bv7uq")
+
+[node name="StaticBody3D" type="StaticBody3D" parent="."]
+collision_layer = 2
+collision_mask = 0
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D"]
+mesh = SubResource("SphereMesh_fx5nj")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0893555, 0, -0.148438)
+shape = SubResource("SphereShape3D_5t4yk")

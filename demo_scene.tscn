@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3 uid="uid://difgppg3fikqr"]
+[gd_scene load_steps=6 format=3 uid="uid://difgppg3fikqr"]
 
 [ext_resource type="Script" path="res://kine_body_2d.gd" id="1_bo37w"]
 [ext_resource type="Script" path="res://TestKineBody2DCs.cs" id="2_ebgph"]
@@ -8,6 +8,9 @@ size = Vector2(32, 32)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_upat6"]
 radius = 16.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vm7a7"]
+size = Vector2(893, 34)
 
 [node name="Node2D" type="Node2D"]
 
@@ -28,3 +31,9 @@ metadata/_edit_group_ = true
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2DCs"]
 shape = SubResource("CircleShape2D_upat6")
 debug_color = Color(0.994404, 0, 0.222622, 0.42)
+
+[node name="StaticBody2D" type="StaticBody2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
+position = Vector2(513.5, 367)
+shape = SubResource("RectangleShape2D_vm7a7")
