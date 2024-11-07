@@ -38,7 +38,7 @@ signal collided_ceiling
 signal collided_floor
 
 ## The mass of the body, which will affect the impulse that will be applied to the body.
-@export_range(0.1, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
+@export_range(0.0, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
 	set(value):
 		PhysicsServer2D.body_set_param(get_rid(), PhysicsServer2D.BODY_PARAM_MASS, maxf(0.001, value))
 	get:
@@ -66,10 +66,15 @@ signal collided_floor
 @export_range(0.0, 999.0, 0.1, "or_greater", "hide_slider", "suffix:x") var gravity_scale: float = 1.0
 ## The maximum of falling speed. If set to [code]0[/code], there will be no limit on maximum falling speed and the body will keep falling faster and faster.
 @export_range(0.0, 12500.0, 0.1, "or_greater", "hide_slider", "suffix:px/s") var max_falling_speed: float = 1500.0
-@export_group("Rotation", "rotation_")
+#==
+@export_group("Rotation Synchronization", "rotation_sync_")
+## The speed of rotation synchronization. The higher the value, the faster the body will be rotated to fit to the up direction.
+@export_range(0.0, 9999.0, 0.1, "radians_as_degrees", "or_greater", "hide_slider", "suffix:°/s") var rotation_sync_speed: float = PI / 0.06
+## The distance to snap the body immediately to the target rotation.
+@export_range(0.0, 1024.0, 0.1, "or_greater", "hide_slider", "suffix:px") var rotation_sync_snapping_distance: float = 512.0
 
-# Velocity in previous frame
-var __prev_velocity: Vector2
+var __prev_velocity: Vector2 # Velocity in previous frame
+var __prev_is_on_floor: bool # Whether the body was on the floor in previous frame
 
 
 #region == main physics methods ==
@@ -78,20 +83,20 @@ var __prev_velocity: Vector2
 ## while the [param global_rotation_sync_up_direction] will synchronize [member Node2D.global_rotation] to [member CharacterBody2D.up_direction] by calling [method synchronize_global_rotation_to_up_direction].
 func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: bool = true) -> bool:
 	__prev_velocity = velocity
+	__prev_is_on_floor = is_on_floor()
 	
 	var g := get_gravity()
 	var gdir := g.normalized()
 	
 	# `up_direction` will not work in floating mode
-	if motion_mode == MotionMode.MOTION_MODE_GROUNDED:
-		if gdir != Vector2(NAN, NAN) and not gdir.is_zero_approx():
-			up_direction = -gdir
+	if motion_mode == MotionMode.MOTION_MODE_GROUNDED and not is_nan(gdir.x) and not is_nan(gdir.y) and not gdir.is_zero_approx():
+		up_direction = -gdir
 	
 	# Applying gravity
 	if gravity_scale > 0.0:
 		velocity += g * gravity_scale * __get_delta()
 		var fv := velocity.project(gdir) # Falling velocity
-		if max_falling_speed > 0.0 and fv != Vector2(NAN, NAN) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
+		if max_falling_speed > 0.0 and not is_nan(fv.x) and not is_nan(fv.y) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
 			velocity -= fv - fv.normalized() * max_falling_speed
 
 	# Synchronizing global rotation to up direction
@@ -119,7 +124,14 @@ func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: 
 func synchronize_global_rotation_to_up_direction() -> void:
 	if motion_mode != MotionMode.MOTION_MODE_GROUNDED:
 		return # Non-ground mode does not support [member up_direction].
-	global_rotation = get_up_direction_rotation_orthogonal()
+	var target_rotation := get_up_direction_rotation_orthogonal()
+	if is_on_floor() or __prev_is_on_floor or is_equal_approx(global_rotation, target_rotation):
+		global_rotation = get_up_direction_rotation_orthogonal()
+	else:
+		# To avoid the issue when [member global_rotation] encounters PI or -PI.
+		if is_equal_approx(global_rotation, -target_rotation):
+			global_rotation *= -1.0
+		global_rotation = lerp_angle(global_rotation, target_rotation, rotation_sync_speed * __get_delta())
 #endregion
 
 #region == helper physics methods ==

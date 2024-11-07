@@ -22,11 +22,14 @@ extends CharacterBody3D
 ## the acceleration is time-independent. Otherwise, the result of acceleration will be incorrect.[br][br]
 ##
 ## [b]Note:[/b] During the high consumption of the [method CharacterBody3D.move_kinebody], it is not couraged to run the game with the overnumbered use of [KineBody3D].
+##
+## @experimental: The rotation synchronization feature is still experimental and may not work as expected.
+## 
 
 ## Definitions about the transformation method on [member motion_vector].
 enum MotionVectorDirection {
-	UP_DIRECTION, ## The direction of the [member motion_vector] is perpendicular to the plane of that the member [member CharacterBody3D.up_direction] stands for.
-	GLOBAL_BASIS, ## The direction of the [member motion_vector] is rotated by [member Node3D.global_basis].
+	UP_DIRECTION, ## The direction of the [member motion_vector] is transformed by the quaternion constructed by [member CharacterBody3D.up_direction].
+	GLOBAL_BASIS, ## The direction of the [member motion_vector] is rotated by [method Node3D.global_basis.get_rotation_quaternion].
 	DEFAULT, ## The [member motion_vector] is an alternative identifier of [member CharacterBody3D.velocity].
 }
 
@@ -38,7 +41,7 @@ signal collided_ceiling
 signal collided_floor
 
 ## The mass of the body, which will affect the impulse that will be applied to the body.
-@export_range(0.1, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
+@export_range(0.0, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
 	set(value):
 		PhysicsServer3D.body_set_param(get_rid(), PhysicsServer3D.BODY_PARAM_MASS, maxf(0.001, value))
 	get:
@@ -52,23 +55,27 @@ signal collided_floor
 			MotionVectorDirection.DEFAULT:
 				velocity = value
 			MotionVectorDirection.UP_DIRECTION:
-				velocity = get_up_direction_rotation_basis() * value # Uses basis to get accurate transformed velocity.
+				velocity = get_up_direction_rotation_quaternion() * value # Uses quaternion to get accurate transformed velocity.
 			MotionVectorDirection.GLOBAL_BASIS:
-				velocity = global_basis.scaled(Vector3.ONE / basis.get_scale()) * value
+				velocity = global_basis.get_rotation_quaternion() * value
 	get:
 		match (motion_vector_direction):
 			MotionVectorDirection.UP_DIRECTION:
-				return get_up_direction_rotation_basis().inverse() * velocity
+				return get_up_direction_rotation_quaternion().inverse() * velocity
 			MotionVectorDirection.GLOBAL_BASIS:
-				return global_basis.inverse().scaled(Vector3.ONE / basis.get_scale()) * velocity
+				return global_basis.get_rotation_quaternion().inverse() * velocity
 		return velocity
 ## The scale of the gravity acceleration. The actual gravity acceleration is calculated as [code]gravity_scale * get_gravity[/code].
 @export_range(0.0, 999.0, 0.1, "or_greater", "hide_slider", "suffix:x") var gravity_scale: float = 1.0
 ## The maximum of falling speed. If set to [code]0[/code], there will be no limit on maximum falling speed and the body will keep falling faster and faster.
 @export_range(0.0, 12500.0, 0.1, "or_greater", "hide_slider", "suffix:m/s") var max_falling_speed: float = 1500.0
+#==
+@export_group("Rotation Synchronization", "rotation_sync_")
+## The speed of rotation synchronization. The higher the value, the faster the body will be rotated to fit to the up direction.
+@export_range(0.0, 9999.0, 0.1, "radians_as_degrees", "or_greater", "hide_slider", "suffix:°/s") var rotation_sync_speed: float = PI / 0.06
 
-# Velocity in previous frame
-var __prev_velocity: Vector3
+var __prev_velocity: Vector3 # Velocity in previous frame
+var __prev_is_on_floor: bool # Whether the body was on the floor in previous frame
 
 
 #region == main physics methods ==
@@ -77,20 +84,20 @@ var __prev_velocity: Vector3
 ## while the [param global_rotation_sync_up_direction] will synchronize [member Node3D.global_rotation] to [member CharacterBody3D.up_direction] by calling [method synchronize_global_rotation_to_up_direction].
 func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: bool = true) -> bool:
 	__prev_velocity = velocity
+	__prev_is_on_floor = is_on_floor()
 	
 	var g := get_gravity()
 	var gdir := g.normalized()
 	
 	# `up_direction` will not work in floating mode
-	if motion_mode == MotionMode.MOTION_MODE_GROUNDED:
-		if gdir != Vector3(NAN, NAN, NAN) and not gdir.is_zero_approx():
-			up_direction = -gdir
+	if motion_mode == MotionMode.MOTION_MODE_GROUNDED and not is_nan(gdir.x) and not is_nan(gdir.y) and not is_nan(gdir.z) and not gdir.is_zero_approx():
+		up_direction = -gdir
 	
 	# Applying gravity
 	if gravity_scale > 0.0:
 		velocity += g * gravity_scale * __get_delta()
 		var fv := velocity.project(gdir) # Falling velocity
-		if max_falling_speed > 0.0 and fv != Vector3(NAN, NAN, NAN) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
+		if max_falling_speed > 0.0 and not is_nan(fv.x) and not is_nan(fv.y) and not is_nan(fv.z) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
 			velocity -= fv - fv.normalized() * max_falling_speed
 	
 	# Synchronizing global rotation to up direction
@@ -114,12 +121,19 @@ func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: 
 	return ret
 
 ## Synchronizes [member Node3D.global_rotation] to [member CharacterBody3D.up_direction],
-## that is to say, the global rotation of the body will be synchronized to the result of [method get_up_direction_rotation_quaternion].
+## that is to say, the global rotation of the body will be synchronized to the result of [method get_up_direction_rotation_for_mesh].
 func synchronize_global_rotation_to_up_direction() -> void:
 	if motion_mode != MotionMode.MOTION_MODE_GROUNDED:
-		return # Non-ground mode does not support [member up_direction].
-	global_rotation = get_up_direction_rotation()
+		return # Non-ground mode does not support up direction.
+	var target_rotation_quaternion := get_up_direction_rotation_quaternion()
+	var global_rotation_quaternion := global_basis.get_rotation_quaternion()
+	var global_basis_scale := global_basis.get_scale()
+	if is_on_floor() or __prev_is_on_floor or global_rotation_quaternion.is_equal_approx(target_rotation_quaternion):
+		global_basis = Basis(target_rotation_quaternion).scaled(global_basis_scale)
+	else:
+		global_basis = Basis(global_rotation_quaternion.slerp(target_rotation_quaternion, rotation_sync_speed * __get_delta())).scaled(global_basis_scale)
 #endregion
+
 
 #region == helper physics methods ==
 ## Accelerates the body by the given [param acceleration].
@@ -198,31 +212,30 @@ func turn_back_walk() -> void:
 func bounce_jumping_falling() -> void:
 	velocity = velocity.bounce(up_direction) if __prev_velocity.is_zero_approx() else __prev_velocity.bounce(up_direction)
 
-## Sets walking velocity of the character.
+## Sets walking velocity of the character. The walking velocity is the plane with [member up_direction] as its normal.[br][br]
+## [b]Note:[/b] The [code]x[/code] component of the parameter will be the [code]x[/code] component of the motion vector, while the [code]y[/code] component will be the [code]z[/code] component of the motion vector.
 func set_walking_velocity(to: Vector2) -> void:
 	motion_vector = Vector3(to.x, motion_vector.y, to.y)
 
-## Returns the walking velocity of the character.
+## Returns the walking velocity of the character. See [method set_walking_velocity] for details about what is the walking velocity.[br][br]
+## [b]Note:[/b] The [code]x[/code] component of the returned value is from the [code]x[/code] component of the motion vector, while the [code]y[/code] component is form the [code]z[/code] component of the motion vector.
 func get_walking_velocity() -> Vector2:
 	return Vector2(motion_vector.x, motion_vector.z)
 
-## Speed up the walking velocity.
+## Speed up the walking velocity, for the convenience of platform games. See [method set_walking_velocity] for details about what is the walking velocity.
 func walking_speed_up(acceleration: float, to: Vector2) -> void:
 	set_walking_velocity(get_walking_velocity().move_toward(to, acceleration))
 
-## Slows down the walking velocity to [Vector2.ZERO], for the convenience of platform games.
+## Slows down the walking velocity to [Vector2.ZERO], for the convenience of platform games. See [method set_walking_velocity] for details about what is the walking velocity.
 func walking_slow_down_to_zero(deceleration: float) -> void:
 	set_walking_velocity(get_walking_velocity().move_toward(Vector2.ZERO, deceleration))
 #endregion
 
 #region == Helper methods ==
-## Returns the [Basis] than stands for the transofmration of the up direction.
-func get_up_direction_rotation_basis() -> Quaternion:
-	return Quaternion(Vector3.UP, up_direction)
-
-## Returns the angle [Basis] of the up direction.
-func get_up_direction_rotation() -> Vector3:
-	return get_up_direction_rotation_basis().get_euler()
+## Returns the [Quaternion] that stands for the transformation of the up direction.
+func get_up_direction_rotation_quaternion() -> Quaternion:
+	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+	return (Quaternion(global_basis.y, up_direction) * global_basis.get_rotation_quaternion()).normalized()
 #endregion
 
 #region == Cross-dimensional methods ==

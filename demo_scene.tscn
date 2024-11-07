@@ -1,29 +1,33 @@
-[gd_scene load_steps=6 format=3 uid="uid://difgppg3fikqr"]
+[gd_scene load_steps=7 format=3 uid="uid://difgppg3fikqr"]
 
 [ext_resource type="Script" path="res://kine_body_2d.gd" id="1_bo37w"]
 [ext_resource type="Script" path="res://TestKineBody2DCs.cs" id="2_ebgph"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_mbr6m"]
-size = Vector2(32, 32)
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ap70o"]
+radius = 16.0
+height = 64.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_upat6"]
 radius = 16.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_vm7a7"]
-size = Vector2(893, 34)
+[sub_resource type="CircleShape2D" id="CircleShape2D_rg7tn"]
+radius = 95.6831
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_6hgul"]
+radius = 320.1
 
 [node name="Node2D" type="Node2D"]
 
 [node name="KineBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(240, 208)
+position = Vector2(224, 176)
 script = ExtResource("1_bo37w")
 metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2D"]
-shape = SubResource("RectangleShape2D_mbr6m")
+shape = SubResource("CapsuleShape2D_ap70o")
 
 [node name="KineBody2DCs" type="CharacterBody2D" parent="."]
-position = Vector2(400, 208)
+position = Vector2(669.896, 102.776)
 script = ExtResource("2_ebgph")
 Mass = 1.0
 metadata/_edit_group_ = true
@@ -33,7 +37,20 @@ shape = SubResource("CircleShape2D_upat6")
 debug_color = Color(0.994404, 0, 0.222622, 0.42)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
+position = Vector2(224, 384)
+metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
-position = Vector2(513.5, 367)
-shape = SubResource("RectangleShape2D_vm7a7")
+shape = SubResource("CircleShape2D_rg7tn")
+
+[node name="Area2D" type="Area2D" parent="."]
+position = Vector2(224, 384)
+gravity_space_override = 3
+gravity_point = true
+gravity_point_center = Vector2(0, 0)
+gravity_direction = Vector2(0, 0)
+metadata/_edit_group_ = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_6hgul")
+debug_color = Color(0, 0.646502, 0.235459, 0.42)

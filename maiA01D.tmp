@@ -1,8 +1,7 @@
-[gd_scene load_steps=20 format=3 uid="uid://cws08vddfl3rn"]
+[gd_scene load_steps=11 format=3 uid="uid://cws08vddfl3rn"]
 
 [ext_resource type="Script" path="res://kine_body_3d.gd" id="1_krlxo"]
 [ext_resource type="Script" path="res://camera_3d.gd" id="1_x3leg"]
-[ext_resource type="Script" path="res://TestKineBody3dCs.cs" id="2_ujhty"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_bxcsr"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -16,34 +15,9 @@ background_mode = 2
 sky = SubResource("Sky_2855u")
 tonemap_mode = 2
 
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_d7nj1"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_50qfb"]
-albedo_color = Color(0.482419, 0.700452, 1, 1)
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_5hung"]
-material = SubResource("StandardMaterial3D_50qfb")
-
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hl4l2"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_siw4b"]
-
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_7k4cm"]
-material = SubResource("StandardMaterial3D_siw4b")
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_sj2rm"]
-albedo_color = Color(0.198599, 0.840562, 0, 1)
-
-[sub_resource type="PrismMesh" id="PrismMesh_vtw4j"]
-material = SubResource("StandardMaterial3D_sj2rm")
-size = Vector3(1.2, 1, 1.2)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_20k0a"]
-albedo_color = Color(0.988235, 0, 0, 1)
-
-[sub_resource type="PrismMesh" id="PrismMesh_bq2q4"]
-material = SubResource("StandardMaterial3D_20k0a")
-size = Vector3(0.5, 0.5, 0.5)
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_bv7uq"]
 radius = 60.0
@@ -69,21 +43,8 @@ transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 
 fov = 50.0
 script = ExtResource("1_x3leg")
 
-[node name="KineBody3DCs" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 16, 0)
-collision_mask = 2
-script = ExtResource("2_ujhty")
-Mass = 1.0
-metadata/_edit_group_ = true
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="KineBody3DCs"]
-shape = SubResource("CapsuleShape3D_d7nj1")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3DCs"]
-mesh = SubResource("CapsuleMesh_5hung")
-
 [node name="KineBody3D" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11.9323, 0)
 collision_mask = 2
 script = ExtResource("1_krlxo")
 metadata/_edit_group_ = true
@@ -95,14 +56,6 @@ shape = SubResource("CapsuleShape3D_hl4l2")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 mesh = SubResource("CapsuleMesh_7k4cm")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3D/MeshInstance3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
-mesh = SubResource("PrismMesh_vtw4j")
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="KineBody3D/MeshInstance3D"]
-transform = Transform3D(-4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0, 1, 0.678939, 0.161801, 0)
-mesh = SubResource("PrismMesh_bq2q4")
 
 [node name="Area3D" type="Area3D" parent="."]
 rotation_edit_mode = 1

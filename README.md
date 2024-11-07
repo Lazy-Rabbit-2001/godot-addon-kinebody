@@ -2,7 +2,7 @@
 
 <div align=center><img src="logo.svg" "" height="75%" width="75%"></div>
 
-This is a Godot addon that provides `KineBody2D` and `KineBody3D`(WIP) nodes, which may improve your development of platform games.
+This is a Godot addon that provides `KineBody2D` and `KineBody3D` nodes, which may improve your development of platform games.
 
 ## Supported targets
 
@@ -84,5 +84,6 @@ They are emitted respectively when the corresponding collision event is invoked.
 ## Credits
 
 * 悠鱼/咸鱼·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
+* Ghostyii: Tutorial author of how to make a sphere-walking character, link [here](https://ghostyii.com/ringworld/).
 * Letterhend Studio: Designer of the font Cyberion Demo.
 * Neale Davidson: Designer of the font Dunkin Sans.
