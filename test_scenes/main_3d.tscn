@@ -1,8 +1,8 @@
 [gd_scene load_steps=20 format=3 uid="uid://cws08vddfl3rn"]
 
-[ext_resource type="Script" path="res://kine_body_3d.gd" id="1_krlxo"]
-[ext_resource type="Script" path="res://camera_3d.gd" id="1_x3leg"]
-[ext_resource type="Script" path="res://TestKineBody3dCs.cs" id="2_ujhty"]
+[ext_resource type="Script" path="res://test_scenes/scripts/camera_3d.gd" id="1_8vguw"]
+[ext_resource type="Script" path="res://test_scenes/scripts/TestKineBody3dCs.cs" id="2_f6e08"]
+[ext_resource type="Script" path="res://test_scenes/scripts/kine_body_3d.gd" id="3_s4qvj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_bxcsr"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -67,12 +67,12 @@ shadow_enabled = true
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 12.4914, 20.2189)
 fov = 50.0
-script = ExtResource("1_x3leg")
+script = ExtResource("1_8vguw")
 
 [node name="KineBody3DCs" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 16, 0)
 collision_mask = 2
-script = ExtResource("2_ujhty")
+script = ExtResource("2_f6e08")
 Mass = 1.0
 metadata/_edit_group_ = true
 
@@ -85,7 +85,7 @@ mesh = SubResource("CapsuleMesh_5hung")
 [node name="KineBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16, 0)
 collision_mask = 2
-script = ExtResource("1_krlxo")
+script = ExtResource("3_s4qvj")
 metadata/_edit_group_ = true
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="KineBody3D"]

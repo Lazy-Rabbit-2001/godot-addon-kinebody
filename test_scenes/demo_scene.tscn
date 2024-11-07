@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://difgppg3fikqr"]
 
-[ext_resource type="Script" path="res://kine_body_2d.gd" id="1_bo37w"]
-[ext_resource type="Script" path="res://TestKineBody2DCs.cs" id="2_ebgph"]
+[ext_resource type="Script" path="res://test_scenes/scripts/kine_body_2d.gd" id="1_ufpot"]
+[ext_resource type="Script" path="res://test_scenes/scripts/TestKineBody2DCs.cs" id="2_267u8"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ap70o"]
 radius = 16.0
@@ -20,7 +20,7 @@ radius = 320.1
 
 [node name="KineBody2D" type="CharacterBody2D" parent="."]
 position = Vector2(224, 176)
-script = ExtResource("1_bo37w")
+script = ExtResource("1_ufpot")
 metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2D"]
@@ -28,7 +28,7 @@ shape = SubResource("CapsuleShape2D_ap70o")
 
 [node name="KineBody2DCs" type="CharacterBody2D" parent="."]
 position = Vector2(669.896, 102.776)
-script = ExtResource("2_ebgph")
+script = ExtResource("2_267u8")
 Mass = 1.0
 metadata/_edit_group_ = true
 
