@@ -11,7 +11,7 @@ height = 64.0
 radius = 16.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rg7tn"]
-radius = 95.6831
+radius = 32.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_6hgul"]
 radius = 320.1
@@ -19,7 +19,7 @@ radius = 320.1
 [node name="Node2D" type="Node2D"]
 
 [node name="KineBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(224, 176)
+position = Vector2(528, 72)
 script = ExtResource("1_ufpot")
 metadata/_edit_group_ = true
 
@@ -30,6 +30,7 @@ shape = SubResource("CapsuleShape2D_ap70o")
 position = Vector2(669.896, 102.776)
 script = ExtResource("2_267u8")
 Mass = 1.0
+RotationSyncSpeed = 52.3599
 metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2DCs"]
@@ -39,6 +40,7 @@ debug_color = Color(0.994404, 0, 0.222622, 0.42)
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(224, 384)
 metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D"]
 shape = SubResource("CircleShape2D_rg7tn")
@@ -50,6 +52,7 @@ gravity_point = true
 gravity_point_center = Vector2(0, 0)
 gravity_direction = Vector2(0, 0)
 metadata/_edit_group_ = true
+metadata/_edit_lock_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
 shape = SubResource("CircleShape2D_6hgul")

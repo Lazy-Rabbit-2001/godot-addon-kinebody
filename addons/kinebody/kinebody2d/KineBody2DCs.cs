@@ -81,14 +81,23 @@ public partial class KineBody2DCs : CharacterBody2D
     /// </summary>
     [ExportGroup("Rotation Synchronization", "RotationSync")]
     [Export(PropertyHint.Range, "0.0, 9999.0, 0.1, radians_as_degrees, or_greater, hide_slider, suffix:°/s")]
-    public double RotationSyncSpeed { get; set; } = Math.PI / 0.06d;
+    public double RotationSyncSpeed { get; set; } = Math.PI * 2.0d;
 
-    private Vector2 _prevVelocity; // Velocity in previous frame.
-    private bool _prevIsOnFloor; // Whetner the body is on floor in previous frame.
+    private Vector2 _prevVelocity;
+    private bool _prevIsOnFloor;
 
     private double GetDelta()
     {
         return Engine.IsInPhysicsFrame() ? GetPhysicsProcessDeltaTime() : GetProcessDeltaTime();
+    }
+    private static bool IsComponentNotNan(Vector2 vec)
+    {
+        for (byte i = 0; i < 2; i++) {
+            if (Mathf.IsNaN(vec[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
 #region == Main physics methods ==
@@ -105,33 +114,29 @@ public partial class KineBody2DCs : CharacterBody2D
         _prevIsOnFloor = IsOnFloor();
 
         var g = GetGravity();
-        var gDir = GetGravity().Normalized();
+        var gDir = g.Normalized();
 
-        // `up_direction` will not work in floating mode
-        if (MotionMode == MotionModeEnum.Grounded && !Mathf.IsNaN(gDir.X) && !Mathf.IsNaN(gDir.Y) && !gDir.IsZeroApprox()) {
+        // UpDirection will not work in floating mode
+        if (MotionMode == MotionModeEnum.Grounded && IsComponentNotNan(gDir) && !gDir.IsZeroApprox()) {
             UpDirection = -gDir;
         }
 
-        // Applying gravity
         if (GravityScale > 0.0d) {
             Velocity += g * (float)(GravityScale * GetDelta());
-            var fV = Velocity.Project(gDir);
-            if (MaxFallingSpeed > 0.0d && !Mathf.IsNaN(fV.X) && !Mathf.IsNaN(fV.Y) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
+            var fV = Velocity.Project(gDir); // Falling velocity
+            if (MaxFallingSpeed > 0.0d && IsComponentNotNan(fV) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
                 Velocity -= fV - fV.Normalized() * (float)MaxFallingSpeed;
             }
         }
 
-        // Synchronizing global rotation to up direction
         if (globalRotationSyncUpDirection) {
             SynchronizeGlobalRotationToUpDirection();
         }
-        
-        // Applying speed scale
+
         Velocity *= speedScale;
         var ret = MoveAndSlide();
         Velocity /= speedScale;
 
-        // Handling signal emissions
         if (ret) {
             if (IsOnWall()) {
                 EmitSignal(SignalName.CollidedWall);
@@ -153,9 +158,9 @@ public partial class KineBody2DCs : CharacterBody2D
     public void SynchronizeGlobalRotationToUpDirection()
     {
         if (MotionMode != MotionModeEnum.Grounded) {
-            return; // Non-ground mode does not support `up_direction`.
+            return; // Non-ground mode does not support UpDirection.
         }
-        var targetRotation = (float)GetUpDirectionRotationOrthogonal();
+        var targetRotation = (float)GetUpDirectionRotation();
         if (IsOnFloor() || _prevIsOnFloor || Mathf.IsEqualApprox(GlobalRotation, targetRotation)) {
             GlobalRotation = targetRotation;
         } else {
@@ -283,7 +288,7 @@ public partial class KineBody2DCs : CharacterBody2D
     /// Returns the angle of the up direction rotated by [code]PI / 2.0[/code].
     /// </summary>
     /// <returns></returns>
-    public float GetUpDirectionRotationOrthogonal() => UpDirection.AngleTo(Vector2.Up);
+    public float GetUpDirectionRotation() => Vector2.Up.AngleTo(UpDirection);
 #endregion
 
 #region == Cross-dimensional methods ==
@@ -303,7 +308,7 @@ public partial class KineBody2DCs : CharacterBody2D
                 Velocity = value;
                 break;
             case MotionVectorDirectionEnum.UpDirection:
-                Velocity = value.Rotated(GetUpDirectionRotationOrthogonal());
+                Velocity = value.Rotated(GetUpDirectionRotation());
                 break;
             case MotionVectorDirectionEnum.GlobalRotation:
                 Velocity = value.Rotated(GlobalRotation);
@@ -316,7 +321,7 @@ public partial class KineBody2DCs : CharacterBody2D
     {
         switch (MotionVectorDirection) {
             case MotionVectorDirectionEnum.UpDirection:
-                return Velocity.Rotated(-GetUpDirectionRotationOrthogonal());
+                return Velocity.Rotated(-GetUpDirectionRotation());
             case MotionVectorDirectionEnum.GlobalRotation:
                 return Velocity.Rotated(-GlobalRotation);
             default:

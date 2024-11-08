@@ -81,14 +81,23 @@ public partial class KineBody3DCs : CharacterBody3D
     /// </summary>
     [ExportGroup("Rotation Synchronization", "RotationSync")]
     [Export(PropertyHint.Range, "0.0, 9999.0, 0.1, radians_as_degrees, or_greater, hide_slider, suffix:°/s")]
-    public double RotationSyncSpeed { get; set; } = Math.PI / 0.06d;
+    public double RotationSyncSpeed { get; set; } = Math.PI * 2.0d;
 
-    private Vector3 _prevVelocity; // Velocity in previous frame.
-    private bool _prevIsOnFloor; // Whetner the body is on floor in previous frame.
+    private Vector3 _prevVelocity;
+    private bool _prevIsOnFloor;
 
     private double GetDelta()
     {
         return Engine.IsInPhysicsFrame() ? GetPhysicsProcessDeltaTime() : GetProcessDeltaTime();
+    }
+    private static bool IsComponentNotNan(Vector3 vec)
+    {
+        for (byte i = 0; i < 3; i++) {
+            if (Mathf.IsNaN(vec[i])) {
+                return false;
+            }
+        }
+        return true;
     }
 
 #region == Main physics methods ==
@@ -105,33 +114,29 @@ public partial class KineBody3DCs : CharacterBody3D
         _prevIsOnFloor = IsOnFloor();
 
         var g = GetGravity();
-        var gDir = GetGravity().Normalized();
+        var gDir = g.Normalized();
 
-        // `up_direction` will not work in floating mode
-        if (MotionMode == MotionModeEnum.Grounded && !Mathf.IsNaN(gDir.X) && !Mathf.IsNaN(gDir.Y) && !Mathf.IsNaN(gDir.Z) && !gDir.IsZeroApprox()) {
+        // UpDirection will not work in floating mode
+        if (MotionMode == MotionModeEnum.Grounded && IsComponentNotNan(gDir) && !gDir.IsZeroApprox()) {
             UpDirection = -gDir;
         }
 
-        // Applying gravity
         if (GravityScale > 0.0d) {
             Velocity += g * (float)(GravityScale * GetDelta());
-            var fV = Velocity.Project(gDir);
-            if (MaxFallingSpeed > 0.0d && !Mathf.IsNaN(fV.X) && !Mathf.IsNaN(fV.Y) && !Mathf.IsNaN(fV.Z) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
+            var fV = Velocity.Project(gDir); // Falling velocity
+            if (MaxFallingSpeed > 0.0d && IsComponentNotNan(fV) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
                 Velocity -= fV - fV.Normalized() * (float)MaxFallingSpeed;
             }
         }
 
-        // Synchronizing global rotation to up direction
         if (globalRotationSyncUpDirection) {
             SynchronizeGlobalRotationToUpDirection();
         }
         
-        // Applying speed scale
         Velocity *= speedScale;
         var ret = MoveAndSlide();
         Velocity /= speedScale;
 
-        // Handling signal emissions
         if (ret) {
             if (IsOnWall()) {
                 EmitSignal(SignalName.CollidedWall);

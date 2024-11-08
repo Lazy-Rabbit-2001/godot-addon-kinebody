@@ -9,12 +9,16 @@ extends CharacterBody3D
 ## 
 ## A [KineBody3D] contains a lot of properties and methods for easy deployment of a platform game character. You can set its gravity and make the body fall by calling [method move_kinebody].
 ## Also, you can call [method walking_speed_up], [method walking_slow_down_to_zero], and [method jump] to control the movement of your character.
-## For physics lovers, you can also set the [member mass] of the body and affect the velocity by calling [method apply_momentum] or [method set_momentum].
+## For physics lovers, you can also set the [member mass] of the body, and affect the velocity by calling [method apply_momentum] or [method set_momentum].
 ## Meanwhile, you can call [method accelerate] to apply an acceleration to the body directly, if you prefer pure velocity control.[br][br]
 ##
+## For platform games with multiple gravity directions, setting velocity is a tricky matter, because you have to consider the complicated transformation to the velocity to fit the effect you want to achieve. 
+## Fortunately, [KineBody2D] provides a helper member [member motion_vector], which enables you to set the velocity by modifying the value of this member without any consideration of how velocity should be transformed to.
+## By default, this handles the velocity to fit the up direction of the body, and you can set the [member motion_vector_direction] to make the velocity transformed by other means. In this way, it is also called [b]local velocity[/b].[br][br]
+##
 ## Although you will be benefic a lot from [KineBody3D], there are still something that you should be careful about.
-## Because some calls, like [method jump], [method turn_wall], and [method bounce_jumping_falling] relys on [member CharacterBody3D.up_direction],
-## the up direction will keep always being the opposite direction of the gravity. This would bring appearence incoherence: Imagine a character in a
+## Because some calls, like [method jump], [method turn_wall], and [method bounce_jumping_falling], relys on [member CharacterBody3D.up_direction],
+## the up direction will keep always being opposite to the gravity. This would bring appearence incoherence: Imagine a character in an
 ## upside-down gravity space "standing" as if it were in the normal gravity space. Therefore, a new concept "rotation synchronization" is introduced to
 ## fix this problem. By rotating the body and make the global rotation fit to the up direction, the body will look reasonably.[br][br]
 ##
@@ -23,10 +27,8 @@ extends CharacterBody3D
 ##
 ## [b]Note:[/b] During the high consumption of the [method CharacterBody3D.move_kinebody], it is not couraged to run the game with the overnumbered use of [KineBody3D].
 ##
-## @experimental: The rotation synchronization feature is still experimental and may not work as expected.
-## 
 
-## Definitions about the transformation method on [member motion_vector].
+## Definitions about the transformation method to [member motion_vector].
 enum MotionVectorDirection {
 	UP_DIRECTION, ## The direction of the [member motion_vector] is transformed by the quaternion constructed by [member CharacterBody3D.up_direction].
 	GLOBAL_BASIS, ## The direction of the [member motion_vector] is rotated by [method Node3D.global_basis.get_rotation_quaternion].
@@ -72,10 +74,10 @@ signal collided_floor
 #==
 @export_group("Rotation Synchronization", "rotation_sync_")
 ## The speed of rotation synchronization. The higher the value, the faster the body will be rotated to fit to the up direction.
-@export_range(0.0, 9999.0, 0.1, "radians_as_degrees", "or_greater", "hide_slider", "suffix:°/s") var rotation_sync_speed: float = PI / 0.06
+@export_range(0.0, 9999.0, 0.1, "radians_as_degrees", "or_greater", "hide_slider", "suffix:°/s") var rotation_sync_speed: float = TAU
 
-var __prev_velocity: Vector3 # Velocity in previous frame
-var __prev_is_on_floor: bool # Whether the body was on the floor in previous frame
+var __prev_velocity: Vector3
+var __prev_is_on_floor: bool
 
 
 #region == main physics methods ==
@@ -89,27 +91,23 @@ func move_kinebody(speed_scale: float = 1.0, global_rotation_sync_up_direction: 
 	var g := get_gravity()
 	var gdir := g.normalized()
 	
-	# `up_direction` will not work in floating mode
-	if motion_mode == MotionMode.MOTION_MODE_GROUNDED and not is_nan(gdir.x) and not is_nan(gdir.y) and not is_nan(gdir.z) and not gdir.is_zero_approx():
+	# Up_direction will not work in floating mode
+	if motion_mode == MotionMode.MOTION_MODE_GROUNDED and __is_component_not_nan(gdir) and not gdir.is_zero_approx():
 		up_direction = -gdir
 	
-	# Applying gravity
 	if gravity_scale > 0.0:
 		velocity += g * gravity_scale * __get_delta()
 		var fv := velocity.project(gdir) # Falling velocity
-		if max_falling_speed > 0.0 and not is_nan(fv.x) and not is_nan(fv.y) and not is_nan(fv.z) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
+		if max_falling_speed > 0.0 and __is_component_not_nan(fv) and fv.dot(gdir) > 0.0 and fv.length_squared() > max_falling_speed ** 2.0:
 			velocity -= fv - fv.normalized() * max_falling_speed
 	
-	# Synchronizing global rotation to up direction
 	if global_rotation_sync_up_direction:
 		synchronize_global_rotation_to_up_direction()
 	
-	# Applying speed scale
 	velocity *= speed_scale
 	var ret := move_and_slide()
 	velocity /= speed_scale
 	
-	# Handling signal emissions
 	if ret:
 		if is_on_wall():
 			collided_wall.emit()
@@ -244,6 +242,11 @@ static func meters_to_pixels(meters: float) -> float:
 	return meters / 3779.527559
 #endregion
 
-# Returns the time delta used in physics or idle iteration.
 func __get_delta() -> float:
 	return get_physics_process_delta_time() if Engine.is_in_physics_frame() else get_process_delta_time()
+
+func __is_component_not_nan(vec: Vector3) -> bool:
+	for i: int in 3:
+		if is_nan(vec[i]):
+			return false
+	return true
