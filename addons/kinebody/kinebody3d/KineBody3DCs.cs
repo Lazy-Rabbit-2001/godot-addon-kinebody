@@ -4,27 +4,28 @@ using System;
 namespace Godot;
 
 /// <summary>
-/// C# edition of <c>KineBody3D</c>.<br/>
+/// C# edition of <c>KineBody3D</c>.<br/><br/>
 /// <b>Note:</b> During the high consumption of the <c>CharacterBody3D.MoveAndSlide()</c>, it is not couraged to run with the overnumbered use of <c>KineBody3DCs</c>.<br/><br/>
-/// <b>EXPERIMENTAL:</b> The rotation synchronization feature is still experimental and may not work as expected.
 /// </summary>
-[Tool]
+
 [GlobalClass, Icon("res://addons/kinebody/kinebody3d/kinebody3d_csharp.svg")]
 public partial class KineBody3DCs : CharacterBody3D
 {
 /// <summary>
-    /// Definitions about the transformation method on <c>MotionVector</c>.<br/>
+    /// Definitions about the transformation method to <c>MotionVector</c>.<br/>
     /// * <c>UpDirection</c>: The direction of the <c>MotionVector</c> is transformed bythe quaternion contructed by <c>CharacterBody3D.UpDirection</c>.<br/>
     /// * <c>GlobalBasis</c>: The direction of the <c>MotionVector</c> is rotated by <c>Node3D.GlobalBasis.GetRotationQuaternion()</c>.<br/>
     /// * <c>Default</c>: The <c>MotionVector</c> is an alternative identifier of <c>CharacterBody3D.Velocity</c>.
     /// </summary>
     /// <seealso cref="MotionVector"/>
-    public enum MotionVectorDirectionEnum
+    public enum MotionVectorDirectionEnum : byte
     {
         UpDirection,
         GlobalBasis,
         Default,
     }
+
+    private MotionVectorDirectionEnum _motionVectorDirection = MotionVectorDirectionEnum.UpDirection;
 
     /// <summary>
     /// Emitted when the body collides with the side of the other body.
@@ -42,40 +43,50 @@ public partial class KineBody3DCs : CharacterBody3D
     [Signal]
     public delegate void CollidedFloorEventHandler();
 
+    private float _mass = 1.0f;
+
     /// <summary>
-    /// The mass of the body, which will affect the impulse that will be applied to the body.
-    /// <b>Note</b> Due to the limitation of assignment for auto-implemented properties in C#, the default value is also the minimum that it can be modified to in the inspector.
+    /// The mass of the body, which will affect the impulse that will be applied to the body.<br/><br/>
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 99999.0, 0.1, or_greater, hide_slider, suffix:kg")]
-    public double Mass
+    public float Mass
     { 
-        get => (double)PhysicsServer3D.BodyGetParam(GetRid(), PhysicsServer3D.BodyParameter.Mass); 
-        set => PhysicsServer3D.BodySetParam(GetRid(), PhysicsServer3D.BodyParameter.Mass, Mathf.Max(0.001d, value));
+        get => (float)PhysicsServer3D.BodyGetParam(GetRid(), PhysicsServer3D.BodyParameter.Mass); 
+        set => PhysicsServer3D.BodySetParam(GetRid(), PhysicsServer3D.BodyParameter.Mass, value);
     }
     /// <summary>
     /// The option that defines which transformation method will be applied to <c>MotionVector</c>.
     /// </summary>
+    /// <seealso cref="MotionVectorDirectionEnum"/>
     [Export]
-    public MotionVectorDirectionEnum MotionVectorDirection { get; set; } = MotionVectorDirectionEnum.UpDirection;
+    public MotionVectorDirectionEnum MotionVectorDirection { 
+        get => _motionVectorDirection; 
+        set
+        {
+            _motionVectorDirection = value;
+            SetMotionVector(MotionVector); // Using setter to update the motion vector and make it transformed by the new transformation method defined by new MotioVectorDirection.
+        }
+    }
     /// <summary>
     /// The <c>CharacterBody2D.velocity</c> of the body, transformed by a specific method defined by <c>MotionVectorDirection</c>.
     /// </summary>
+    /// <seealso cref="MotionVectorDirection"/>
     [Export(PropertyHint.None, "suffix:m/s")]
     public Vector3 MotionVector
     {
         get => GetMotionVector();
-        set => SetMotionVector(value);
+        set => SetMotionVector(in value);
     }
     /// <summary>
     /// The scale of the gravity acceleration. The actual gravity acceleration is calculated as <c>GravityScale * GetGravity()</c>.
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 999.0, 0.1, or_greater, hide_slider, suffix:x")]
-    public double GravityScale { get; set; } = 1.0d;
+    public float GravityScale { get; set; } = 1.0f;
     /// <summary>
     /// The maximum of falling speed. If set to <c>0</c>, there will be no limit on maximum falling speed and the body will keep falling faster and faster.
     /// </summary>
     [Export(PropertyHint.Range, "0.0, 12500.0, 0.1, or_greater, hide_slider, suffix:m/s")]
-    public double MaxFallingSpeed { get; set; } = 1500.0d;
+    public float MaxFallingSpeed { get; set; } = 1500.0f;
     /// <summary>
     /// The speed of rotation synchronization. The higher the value, the faster the body will be rotated to fit to the up direction.
     /// </summary>
@@ -125,7 +136,7 @@ public partial class KineBody3DCs : CharacterBody3D
             Velocity += g * (float)(GravityScale * GetDelta());
             var fV = Velocity.Project(gDir); // Falling velocity
             if (MaxFallingSpeed > 0.0d && IsComponentNotNan(fV) && fV.Dot(gDir) > 0.0d && fV.LengthSquared() > Mathf.Pow(MaxFallingSpeed, 2.0d)) {
-                Velocity -= fV - fV.Normalized() * (float)MaxFallingSpeed;
+                Velocity -= fV - fV.Normalized() * MaxFallingSpeed;
             }
         }
 
@@ -177,13 +188,13 @@ public partial class KineBody3DCs : CharacterBody3D
     /// Accelerates the body by the given <c>acceleration</c>.
     /// </summary>
     /// <param name="acceleration"></param>
-    public void Accelerate(Vector3 acceleration) => Velocity += acceleration;
+    public void Accelerate(in Vector3 acceleration) => Velocity += acceleration;
     /// <summary>
     /// Accelerates the body to the target velocity by the given <c>acceleration</c>.
     /// </summary>
     /// <param name="acceleration"></param>
     /// <param name="to"></param>
-    public void AccelerateTo(float acceleration, Vector3 to) => Velocity = Velocity.MoveToward(to, acceleration);
+    public void AccelerateTo(float acceleration, in Vector3 to) => Velocity = Velocity.MoveToward(to, acceleration);
     /// <summary>
     /// Applies the given <c>momentum</c> to the body.<br/><br/>
     /// Momentum is a vector that represents the multiplication of mass and velocity, so the more momentum applied, the faster the body will move.
@@ -191,12 +202,12 @@ public partial class KineBody3DCs : CharacterBody3D
     /// For platform games, the momentum is manipulated more suitable than the force.
     /// </summary>
     /// <param name="momentum"></param>
-    public void ApplyMomentum(Vector3 momentum) => Velocity += momentum / (float)Mass;
+    public void ApplyMomentum(in Vector3 momentum) => Velocity += momentum / (float)Mass;
     /// <summary>
     /// Sets the momentum of the body to the given <c>momentum</c>. See <c>ApplyMomentum()</c> for details about what is momentum.
     /// </summary>
     /// <param name="momentum"></param>
-    public void SetMomentum(Vector3 momentum) => Velocity = momentum / (float)Mass;
+    public void SetMomentum(in Vector3 momentum) => Velocity = momentum / (float)Mass;
     /// <summary>
     /// Returns the momentum of the body. See <c>ApplyMomentum()</c> for details about what is momentum.
     /// </summary>
@@ -206,13 +217,13 @@ public partial class KineBody3DCs : CharacterBody3D
     /// Adds the motion vector by given acceleration.
     /// </summary>
     /// <param name="addedMotionVector"></param>
-    public void AddMotionVector(Vector3 addedMotionVector) => MotionVector += addedMotionVector;
+    public void AddMotionVector(in Vector3 addedMotionVector) => MotionVector += addedMotionVector;
     /// <summary>
     /// Adds the motion vector to the target motion vector by given acceleration.
     /// </summary>
     /// <param name="addedMotionVector"></param>
     /// <param name="to"></param>
-    public void AddMotionVectorTo(float addedMotionVector, Vector3 to) => MotionVector = MotionVector.MoveToward(to, addedMotionVector);
+    public void AddMotionVectorTo(float addedMotionVector, in Vector3 to) => MotionVector = MotionVector.MoveToward(to, addedMotionVector);
     /// <summary>
     /// Adds the <c>X</c> component of the motion vector by given acceleration to the target value.
     /// This is useful for fast achieving walking acceleration of a character's.
@@ -238,17 +249,17 @@ public partial class KineBody3DCs : CharacterBody3D
     /// Returns the friction the body receives when it is on the floor.<br/><br/>
     /// <b>Note:</b> This method is a bit performance-consuming, as it uses <c>PhysicsBody2D.TestMove()</c>, which takes a bit more time to get the result. Be careful when using it frequently, if you are caring about performance.
     /// </summary>
-    public double GetFloorFriction()
+    public float GetFloorFriction()
     {
         if (!IsOnFloor()) {
-            return 0.0d;
+            return 0.0f;
         };
 
-        var friction = 0.0d;
+        var friction = 0.0f;
         var kc = new KinematicCollision3D();
         TestMove(GlobalTransform, -GetFloorNormal(), kc);
         if (kc != null && kc.GetCollider() != null) {
-            return (double)PhysicsServer3D.BodyGetParam(kc.GetColliderRid(), PhysicsServer3D.BodyParameter.Friction);
+            return (float)PhysicsServer3D.BodyGetParam(kc.GetColliderRid(), PhysicsServer3D.BodyParameter.Friction);
         }
 
         return friction;
@@ -281,7 +292,7 @@ public partial class KineBody3DCs : CharacterBody3D
     /// <b>Note:</b> The <c>x</c> component of the parameter will be the <c>x</c> component of the motion vector, while the <c>y</c> component will be the <c>z</c> component of the motion vector.
     /// </summary>
     /// <param name="to"></param>
-    public void SetWalkingVelocity(Vector2 to) => MotionVector = MotionVector with { X = to.X, Z = to.Y };
+    public void SetWalkingVelocity(in Vector2 to) => MotionVector = MotionVector with { X = to.X, Z = to.Y };
     /// <summary>
     /// Returns the walking velocity of the character. See <c>SetWalkingVelocity()</c> for details about what is the walking velocity.<br/><br/>
     /// <b>Note:</b> The <c>x</c> component of the returned value is from the <c>x</c> component of the motion vector, while the <c>y</c> component is form the <c>z</c> component of the motion vector.
@@ -293,7 +304,7 @@ public partial class KineBody3DCs : CharacterBody3D
     /// </summary>
     /// <param name="acceleration"></param>
     /// <param name="to"></param>
-    public void WalkingSpeedUp(float acceleration, Vector2 to) => SetWalkingVelocity(GetWalkingVelocity().MoveToward(to, acceleration));
+    public void WalkingSpeedUp(float acceleration, in Vector2 to) => SetWalkingVelocity(GetWalkingVelocity().MoveToward(to, acceleration));
     /// <summary>
     /// Slows down the walking velocity to <c>Vector2.ZERO</c>, for the convenience of platform games. See <c>SetWalkingVelocity()</c> for details about what is the walking velocity.
     /// </summary>
@@ -306,7 +317,14 @@ public partial class KineBody3DCs : CharacterBody3D
     /// Returns the <c>Quaternion</c> that stands for the transformation of the up direction.
     /// </summary>
     /// <returns></returns>
-    public Quaternion GetUpDirectionRotationQuaternion() =>(new Quaternion(GlobalBasis.Y, UpDirection) * GlobalBasis.GetRotationQuaternion()).Normalized(); // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+    public Quaternion GetUpDirectionRotationQuaternion() 
+    {
+        // To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
+		// we need to use Basis instead of GlobalBasis here during the initialization in the editor.
+        var basis = Engine.IsEditorHint() ? Basis : GlobalBasis;
+        var yDir = basis.Y.Normalized();
+        return (new Quaternion(yDir, UpDirection) * basis.GetRotationQuaternion()).Normalized(); // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+    }
 #endregion
 
 #region == Cross-dimensional methods ==
@@ -319,7 +337,7 @@ public partial class KineBody3DCs : CharacterBody3D
 #endregion
 
 #region == Setters and getters ==
-    private void SetMotionVector(Vector3 value)
+    private void SetMotionVector(in Vector3 value)
     {
         switch (MotionVectorDirection) {
             case MotionVectorDirectionEnum.Default:
@@ -361,7 +379,7 @@ public partial class KineBody3DCs : CharacterBody3D
     public override Variant _PropertyGetRevert(StringName property)
     {
         if (property == (StringName)"Mass") {
-            return 1.0d;
+            return 1.0f;
         }
         return base._PropertyGetRevert(property);
     }

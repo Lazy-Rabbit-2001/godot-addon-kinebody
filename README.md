@@ -46,6 +46,8 @@ Due to some technical limitations, you cannot inherit a C# class from a GDScript
 
 A `KineBody*D` is an derived object from `CharacterBody*D`, which is derived with extra features that help your development of platform games, especially for platform-game characters and enemies.
 
+## Features of `KineBody*D`
+
 ### Gravity
 
 Gravity is a common and important technique in most platform games. However, with `CharacterBody*D`, you cannot yet deploy the gravity system in fingers. Now, `KineBody*D` helps you solve this problem: By introducing `gravity_scale` property, just like one in `RigidBody*D`, it is allowed to realize the gravity system in one minute.  
@@ -61,6 +63,10 @@ For some multi-gravity games, players needs to rotate to fit its apperance to ho
 `KineBody` help you with this problem by introducing a system called `rotation snap`, meaning that when the character is in a special gravity space, its rotation will be snapped to a certain with a tween effect. A new property,`rotation_synchronizing_duration`, is introduced to control the duration of the tween effect. If you need it faster just tweak this value lower.  
 
 The rotation is snapped to the `up_direction` rotating by 90° to make sure the rotation (`global_rotation`) of body fit with its rendering and appearence. To make this work, you need to call `move_kinebody()` as well when the body is going to move, or `synchronize_global_rotation_to_up_direction()` if you want to snap the rotation immediately or manually.
+
+### Motion vector
+
+Sometimes, we may think of making a character that is able to move in a space with uncommon gravity direction, especially when you are going to make such a game with the feature of varying gravity space and on-sphere walking. In this case, however, you have to consider what the velocity should be, and hence you have to implement transformation to the velocity. This is a literally pain and boring process, and would be more annoying because of inacquiantance with the transformation to the velocity. To solve this problem, `motion_vector` is introduced, which is also called **local velocity** because it is transformed from the velocity to a certain variant by a specific transformation. By default, `motion_vector` will transform teh velocity to a value perpendicular to the `up_direction` of the body, and you can set the `motion_vector_direction` to make the transformation by other means. That is to say, if you only know how to set the velocity in a normal gravity space, but you want to set one in an upside-down gravity space, just set `motion_vector` to the value in the normal space and it will be automatically transformed to the velocity in the upside-down space.
 
 ### Collision signals
 
@@ -83,7 +89,7 @@ They are emitted respectively when the corresponding collision event is invoked.
 
 ## Credits
 
-* 悠鱼/咸鱼·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
+* 悠鱼/咸鱼/幻灭者001·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
 * Ghostyii: Tutorial author of how to make a sphere-walking character, link [here](https://ghostyii.com/ringworld/).
 * Letterhend Studio: Designer of the font Cyberion Demo.
 * Neale Davidson: Designer of the font Dunkin Sans.

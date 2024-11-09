@@ -1,14 +1,13 @@
 [gd_scene load_steps=7 format=3 uid="uid://difgppg3fikqr"]
 
-[ext_resource type="Script" path="res://test_scenes/scripts/kine_body_2d.gd" id="1_ufpot"]
-[ext_resource type="Script" path="res://test_scenes/scripts/TestKineBody2DCs.cs" id="2_267u8"]
+[ext_resource type="Script" path="res://test_scenes/scripts/test_kine_body_2d.gd" id="1_ifrk8"]
+[ext_resource type="Script" path="res://test_scenes/scripts/TestKineBody2DCs.cs" id="2_vh50o"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_5f2pk"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_ap70o"]
 radius = 16.0
 height = 64.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_upat6"]
-radius = 16.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_rg7tn"]
 radius = 32.0
@@ -18,24 +17,24 @@ radius = 320.1
 
 [node name="Node2D" type="Node2D"]
 
+[node name="KineBody2DCs" type="CharacterBody2D" parent="."]
+position = Vector2(216, 32)
+wall_min_slide_angle = 0.0
+script = ExtResource("2_vh50o")
+Mass = 1.0
+metadata/_edit_group_ = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2DCs"]
+shape = SubResource("CapsuleShape2D_5f2pk")
+debug_color = Color(0.985568, 0.117896, 0, 0.42)
+
 [node name="KineBody2D" type="CharacterBody2D" parent="."]
-position = Vector2(528, 72)
-script = ExtResource("1_ufpot")
+position = Vector2(416, 80)
+script = ExtResource("1_ifrk8")
 metadata/_edit_group_ = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2D"]
 shape = SubResource("CapsuleShape2D_ap70o")
-
-[node name="KineBody2DCs" type="CharacterBody2D" parent="."]
-position = Vector2(669.896, 102.776)
-script = ExtResource("2_267u8")
-Mass = 1.0
-RotationSyncSpeed = 52.3599
-metadata/_edit_group_ = true
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2DCs"]
-shape = SubResource("CircleShape2D_upat6")
-debug_color = Color(0.994404, 0, 0.222622, 0.42)
 
 [node name="StaticBody2D" type="StaticBody2D" parent="."]
 position = Vector2(224, 384)

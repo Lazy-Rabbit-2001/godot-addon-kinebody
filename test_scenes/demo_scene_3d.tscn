@@ -1,8 +1,8 @@
 [gd_scene load_steps=20 format=3 uid="uid://cws08vddfl3rn"]
 
-[ext_resource type="Script" path="res://test_scenes/scripts/camera_3d.gd" id="1_8vguw"]
+[ext_resource type="Script" path="res://test_scenes/scripts/miscs/camera_3d.gd" id="1_8vguw"]
 [ext_resource type="Script" path="res://test_scenes/scripts/TestKineBody3DCs.cs" id="2_70n7u"]
-[ext_resource type="Script" path="res://test_scenes/scripts/kine_body_3d.gd" id="3_s4qvj"]
+[ext_resource type="Script" path="res://test_scenes/scripts/test_kine_body_3d.gd" id="3_s4qvj"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_bxcsr"]
 sky_horizon_color = Color(0.64625, 0.65575, 0.67075, 1)
@@ -15,14 +15,6 @@ sky_material = SubResource("ProceduralSkyMaterial_bxcsr")
 background_mode = 2
 sky = SubResource("Sky_2855u")
 tonemap_mode = 2
-
-[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_d7nj1"]
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_50qfb"]
-albedo_color = Color(0.482419, 0.700452, 1, 1)
-
-[sub_resource type="CapsuleMesh" id="CapsuleMesh_5hung"]
-material = SubResource("StandardMaterial3D_50qfb")
 
 [sub_resource type="CapsuleShape3D" id="CapsuleShape3D_hl4l2"]
 
@@ -55,6 +47,14 @@ height = 20.0
 [sub_resource type="SphereShape3D" id="SphereShape3D_5t4yk"]
 radius = 10.0
 
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_d7nj1"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_50qfb"]
+albedo_color = Color(0.482419, 0.700452, 1, 1)
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_5hung"]
+material = SubResource("StandardMaterial3D_50qfb")
+
 [node name="Main3D" type="Node3D"]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
@@ -68,19 +68,6 @@ shadow_enabled = true
 transform = Transform3D(1, 0, 0, 0, 0.965926, 0.258819, 0, -0.258819, 0.965926, 0, 12.4914, 20.2189)
 fov = 50.0
 script = ExtResource("1_8vguw")
-
-[node name="KineBody3DCs" type="CharacterBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.40374, 18, 0)
-collision_mask = 2
-script = ExtResource("2_70n7u")
-Mass = 1.0
-metadata/_edit_group_ = true
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="KineBody3DCs"]
-shape = SubResource("CapsuleShape3D_d7nj1")
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3DCs"]
-mesh = SubResource("CapsuleMesh_5hung")
 
 [node name="KineBody3D" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 14, 0)
@@ -125,3 +112,16 @@ mesh = SubResource("SphereMesh_fx5nj")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0893555, 0, -0.148438)
 shape = SubResource("SphereShape3D_5t4yk")
+
+[node name="KineBody3DCs" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.40374, 18, 0)
+collision_mask = 2
+script = ExtResource("2_70n7u")
+Mass = 1.0
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="KineBody3DCs"]
+shape = SubResource("CapsuleShape3D_d7nj1")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="KineBody3DCs"]
+mesh = SubResource("CapsuleMesh_5hung")

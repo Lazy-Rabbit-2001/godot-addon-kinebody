@@ -44,11 +44,14 @@ signal collided_floor
 ## The mass of the body, which will affect the impulse that will be applied to the body.
 @export_range(0.0, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
 	set(value):
-		PhysicsServer2D.body_set_param(get_rid(), PhysicsServer2D.BODY_PARAM_MASS, maxf(0.001, value))
+		PhysicsServer2D.body_set_param(get_rid(), PhysicsServer2D.BODY_PARAM_MASS, value)
 	get:
 		return PhysicsServer2D.body_get_param(get_rid(), PhysicsServer2D.BODY_PARAM_MASS)
 ## The option that defines which transformation method will be applied to [member motion_vector].
-@export var motion_vector_direction: MotionVectorDirection = MotionVectorDirection.UP_DIRECTION
+@export var motion_vector_direction: MotionVectorDirection = MotionVectorDirection.UP_DIRECTION:
+	set(value):
+		motion_vector_direction = value
+		motion_vector = motion_vector # Triggers the setter of motion_vector to update it to fit the new direction.
 ## The [member CharacterBody2D.velocity] of the body, transformed by a specific method defined by [member motion_vector_direction].
 @export_custom(PROPERTY_HINT_NONE, "suffix: px/s") var motion_vector: Vector2:
 	set(value):
@@ -128,9 +131,6 @@ func synchronize_global_rotation_to_up_direction() -> void:
 	if is_on_floor() or __prev_is_on_floor or is_equal_approx(global_rotation, target_rotation):
 		global_rotation = get_up_direction_rotation()
 	else:
-		# To avoid the issue when global_rotation encounters PI or -PI.
-		# if is_equal_approx(global_rotation, -target_rotation):
-		# 	global_rotation *= -1.0
 		global_rotation = lerp_angle(global_rotation, target_rotation, rotation_sync_speed * __get_delta())
 #endregion
 

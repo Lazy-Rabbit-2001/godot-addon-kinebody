@@ -49,7 +49,10 @@ signal collided_floor
 	get:
 		return PhysicsServer3D.body_get_param(get_rid(), PhysicsServer3D.BODY_PARAM_MASS)
 ## The option that defines which transformation method will be applied to [member motion_vector].
-@export var motion_vector_direction: MotionVectorDirection = MotionVectorDirection.UP_DIRECTION
+@export var motion_vector_direction: MotionVectorDirection = MotionVectorDirection.UP_DIRECTION:
+	set(value):
+		motion_vector_direction = value
+		motion_vector = motion_vector # Triggers the setter of motion_vector to update it to fit the new direction.
 ## The [member CharacterBody3D.velocity] of the body, transformed by a specific method defined by [member motion_vector_direction].
 @export_custom(PROPERTY_HINT_NONE, "suffix: m/s") var motion_vector: Vector3:
 	set(value):
@@ -232,8 +235,12 @@ func walking_slow_down_to_zero(deceleration: float) -> void:
 #region == Helper methods ==
 ## Returns the [Quaternion] that stands for the transformation of the up direction.
 func get_up_direction_rotation_quaternion() -> Quaternion:
+	# To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
+	# we need to use basis instead of global_basis here during the initialization in the editor.
+	var tmp_basis := basis if Engine.is_editor_hint() else global_basis
+	var ydir := tmp_basis.y
 	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
-	return (Quaternion(global_basis.y, up_direction) * global_basis.get_rotation_quaternion()).normalized()
+	return (Quaternion(tmp_basis.y, up_direction) * tmp_basis.get_rotation_quaternion()).normalized()
 #endregion
 
 #region == Cross-dimensional methods ==
