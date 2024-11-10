@@ -322,8 +322,7 @@ public partial class KineBody3DCs : CharacterBody3D
         // To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 		// we need to use Basis instead of GlobalBasis here during the initialization in the editor.
         var basis = Engine.IsEditorHint() ? Basis : GlobalBasis;
-        var yDir = basis.Y.Normalized();
-        return (new Quaternion(yDir, UpDirection) * basis.GetRotationQuaternion()).Normalized(); // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+        return (new Quaternion(basis.Y.Normalized(), UpDirection) * basis.GetRotationQuaternion()).Normalized(); // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
     }
 #endregion
 

@@ -238,9 +238,8 @@ func get_up_direction_rotation_quaternion() -> Quaternion:
 	# To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 	# we need to use basis instead of global_basis here during the initialization in the editor.
 	var tmp_basis := basis if Engine.is_editor_hint() else global_basis
-	var ydir := tmp_basis.y
 	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
-	return (Quaternion(tmp_basis.y, up_direction) * tmp_basis.get_rotation_quaternion()).normalized()
+	return (Quaternion(tmp_basis.y.normalized(), up_direction) * tmp_basis.get_rotation_quaternion()).normalized()
 #endregion
 
 #region == Cross-dimensional methods ==
