@@ -13,7 +13,7 @@ extends CharacterBody3D
 ## Meanwhile, you can call [method accelerate] to apply an acceleration to the body directly, if you prefer pure velocity control.[br][br]
 ##
 ## For platform games with multiple gravity directions, setting velocity is a tricky matter, because you have to consider the complicated transformation to the velocity to fit the effect you want to achieve. 
-## Fortunately, [KineBody2D] provides a helper member [member motion_vector], which enables you to set the velocity by modifying the value of this member without any consideration of how velocity should be transformed to.
+## Fortunately, [KineBody3D] provides a helper member [member motion_vector], which enables you to set the velocity by modifying the value of this member without any consideration of how velocity should be transformed to.
 ## By default, this handles the velocity to fit the up direction of the body, and you can set the [member motion_vector_direction] to make the velocity transformed by other means. In this way, it is also called [b]local velocity[/b].[br][br]
 ##
 ## Although you will be benefic a lot from [KineBody3D], there are still something that you should be careful about.
@@ -43,7 +43,7 @@ signal collided_ceiling
 signal collided_floor
 
 ## The mass of the body, which will affect the impulse that will be applied to the body.
-@export_range(0.0, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
+@export_range(0.01, 99999.0, 0.01, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
 	set(value):
 		PhysicsServer3D.body_set_param(get_rid(), PhysicsServer3D.BODY_PARAM_MASS, maxf(0.001, value))
 	get:
@@ -232,17 +232,18 @@ func walking_slow_down_to_zero(deceleration: float) -> void:
 	set_walking_velocity(get_walking_velocity().move_toward(Vector2.ZERO, deceleration))
 #endregion
 
-#region == Helper methods ==
+#region == helper methods ==
 ## Returns the [Quaternion] that stands for the transformation of the up direction.
 func get_up_direction_rotation_quaternion() -> Quaternion:
 	# To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 	# we need to use basis instead of global_basis here during the initialization in the editor.
 	var tmp_basis := basis if Engine.is_editor_hint() else global_basis
 	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+	# Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4
 	return (Quaternion(tmp_basis.y.normalized(), up_direction) * tmp_basis.get_rotation_quaternion()).normalized()
 #endregion
 
-#region == Cross-dimensional methods ==
+#region == cross-dimensional methods ==
 ## Converts the unit of the given value from meters to pixels.
 static func meters_to_pixels(meters: float) -> float:
 	return meters / 3779.527559

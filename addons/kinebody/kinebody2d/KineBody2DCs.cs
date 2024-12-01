@@ -7,7 +7,6 @@ namespace Godot;
 /// C# edition of <c>KineBody2D</c>.<br/><br/>
 /// <b>Note:</b> During the high consumption of the <c>CharacterBody2D.MoveAndSlide()</c>, it is not couraged to run with the overnumbered use of <c>KineBody2DCs</c>.
 /// </summary>
-[Tool]
 [GlobalClass, Icon("res://addons/kinebody/kinebody2d/kinebody2d_csharp.svg")]
 public partial class KineBody2DCs : CharacterBody2D
 {
@@ -45,12 +44,13 @@ public partial class KineBody2DCs : CharacterBody2D
 
     /// <summary>
     /// The mass of the body, which will affect the impulse that will be applied to the body.<br/><br/>
+    /// <b>Note:</b> Due to not loading constructor in non-tool C# script, the mass of the body will by default be the minimum value <c>0.01f</c>.
     /// </summary>
-    [Export(PropertyHint.Range, "0.0, 99999.0, 0.1, or_greater, hide_slider, suffix:kg")]
+    [Export(PropertyHint.Range, "0.01, 99999.0, 0.01, or_greater, hide_slider, suffix:kg")]
     public float Mass
     { 
-        get => (float)PhysicsServer2D.Singleton.BodyGetParam(GetRid(), PhysicsServer2D.BodyParameter.Mass); 
-        set => PhysicsServer2D.Singleton.BodySetParam(GetRid(), PhysicsServer2D.BodyParameter.Mass, value);
+        get => (float)PhysicsServer2D.BodyGetParam(GetRid(), PhysicsServer2D.BodyParameter.Mass); 
+        set => PhysicsServer2D.BodySetParam(GetRid(), PhysicsServer2D.BodyParameter.Mass, value);
     }
     /// <summary>
     /// The option that defines which transformation method will be applied to <c>MotionVector</c>.
@@ -337,6 +337,7 @@ public partial class KineBody2DCs : CharacterBody2D
 #endregion
 
 #region == Property settings ==
+    /*
     public override bool _PropertyCanRevert(StringName property)
     {
         if (property == (StringName)"Mass") {
@@ -352,6 +353,7 @@ public partial class KineBody2DCs : CharacterBody2D
         }
         return base._PropertyGetRevert(property);
     }
+    */
 #endregion
 }
 

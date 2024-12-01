@@ -26,6 +26,7 @@ extends CharacterBody2D
 ## the acceleration is time-independent. Otherwise, the result of acceleration will be incorrect.[br][br]
 ##
 ## [b]Note:[/b] During the high consumption of the [method CharacterBody2D.move_kinebody], it is not couraged to run the game with the overnumbered use of [KineBody2D].
+##
 
 ## Definitions about the transformation method to [member motion_vector].
 enum MotionVectorDirection {
@@ -42,7 +43,7 @@ signal collided_ceiling
 signal collided_floor
 
 ## The mass of the body, which will affect the impulse that will be applied to the body.
-@export_range(0.0, 99999.0, 0.1, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
+@export_range(0.01, 99999.0, 0.01, "or_greater", "hide_slider", "suffix:kg") var mass: float = 1.0:
 	set(value):
 		PhysicsServer2D.body_set_param(get_rid(), PhysicsServer2D.BODY_PARAM_MASS, value)
 	get:
@@ -218,13 +219,13 @@ func walking_slow_down_to_zero(deceleration: float) -> void:
 	add_motion_vector_x_speed_to(deceleration, 0)
 #endregion
 
-#region == Helper methods ==
+#region == helper methods ==
 ## Returns the angle of the up direction to [member Vector2.UP].
 func get_up_direction_rotation() -> float:
 	return Vector2.UP.angle_to(up_direction)
 #endergion
 
-#region == Cross-dimensional methods ==
+#region == cross-dimensional methods ==
 ## Converts the unit of the given value from pixels to meters.
 static func pixels_to_meters(pixels: float) -> float:
 	return pixels * 3779.527559

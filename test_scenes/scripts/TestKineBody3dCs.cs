@@ -3,7 +3,6 @@ using System;
 
 namespace Godot;
 
-[Tool]
 public partial class TestKineBody3DCs : KineBody3DCs
 {
     public override void _PhysicsProcess(double delta)

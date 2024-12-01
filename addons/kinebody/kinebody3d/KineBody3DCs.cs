@@ -7,7 +7,6 @@ namespace Godot;
 /// C# edition of <c>KineBody3D</c>.<br/><br/>
 /// <b>Note:</b> During the high consumption of the <c>CharacterBody3D.MoveAndSlide()</c>, it is not couraged to run with the overnumbered use of <c>KineBody3DCs</c>.<br/><br/>
 /// </summary>
-
 [GlobalClass, Icon("res://addons/kinebody/kinebody3d/kinebody3d_csharp.svg")]
 public partial class KineBody3DCs : CharacterBody3D
 {
@@ -43,12 +42,11 @@ public partial class KineBody3DCs : CharacterBody3D
     [Signal]
     public delegate void CollidedFloorEventHandler();
 
-    private float _mass = 1.0f;
-
     /// <summary>
     /// The mass of the body, which will affect the impulse that will be applied to the body.<br/><br/>
+    /// <b>Note:</b> Due to not loading constructor in non-tool C# script, the mass of the body will by default be the minimum value <c>0.01f</c>.
     /// </summary>
-    [Export(PropertyHint.Range, "0.0, 99999.0, 0.1, or_greater, hide_slider, suffix:kg")]
+    [Export(PropertyHint.Range, "0.01, 99999.0, 0.01, or_greater, hide_slider, suffix:kg")]
     public float Mass
     { 
         get => (float)PhysicsServer3D.BodyGetParam(GetRid(), PhysicsServer3D.BodyParameter.Mass); 
@@ -101,7 +99,7 @@ public partial class KineBody3DCs : CharacterBody3D
     {
         return Engine.IsInPhysicsFrame() ? GetPhysicsProcessDeltaTime() : GetProcessDeltaTime();
     }
-    private static bool IsComponentNotNan(Vector3 vec)
+    private static bool IsComponentNotNan(in Vector3 vec)
     {
         for (byte i = 0; i < 3; i++) {
             if (Mathf.IsNaN(vec[i])) {
@@ -322,7 +320,9 @@ public partial class KineBody3DCs : CharacterBody3D
         // To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 		// we need to use Basis instead of GlobalBasis here during the initialization in the editor.
         var basis = Engine.IsEditorHint() ? Basis : GlobalBasis;
-        return (new Quaternion(basis.Y.Normalized(), UpDirection) * basis.GetRotationQuaternion()).Normalized(); // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+        // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
+        // Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4
+        return (new Quaternion(basis.Y.Normalized(), UpDirection) * basis.GetRotationQuaternion()).Normalized();
     }
 #endregion
 

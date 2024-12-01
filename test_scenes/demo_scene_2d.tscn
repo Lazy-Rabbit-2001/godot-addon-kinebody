@@ -21,7 +21,6 @@ radius = 320.1
 position = Vector2(216, 32)
 wall_min_slide_angle = 0.0
 script = ExtResource("2_vh50o")
-Mass = 1.0
 metadata/_edit_group_ = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="KineBody2DCs"]
