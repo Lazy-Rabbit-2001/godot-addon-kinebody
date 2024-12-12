@@ -238,8 +238,8 @@ func get_up_direction_rotation_quaternion() -> Quaternion:
 	# To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 	# we need to use basis instead of global_basis here during the initialization in the editor.
 	var tmp_basis := basis if Engine.is_editor_hint() else global_basis
-	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
-	# Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4
+	# Code arranged from https://ghostyii.com/ringworld/ by Ghostyii.
+	# Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4 by militaryg.
 	return (Quaternion(tmp_basis.y.normalized(), up_direction) * tmp_basis.get_rotation_quaternion()).normalized()
 #endregion
 

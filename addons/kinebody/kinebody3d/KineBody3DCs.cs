@@ -320,8 +320,8 @@ public partial class KineBody3DCs : CharacterBody3D
         // To avoid the error "!is_inside_tree() is true" thrown in tool mode, which is led by the global basis not initialized in 3D gaming environment,
 		// we need to use Basis instead of GlobalBasis here during the initialization in the editor.
         var basis = Engine.IsEditorHint() ? Basis : GlobalBasis;
-        // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii
-        // Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4
+        // Code arranged from https://ghostyii.com/ringworld/ by Ghostyii.
+        // Inspired and shared by https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4 by militaryg.
         return (new Quaternion(basis.Y.Normalized(), UpDirection) * basis.GetRotationQuaternion()).Normalized();
     }
 #endregion

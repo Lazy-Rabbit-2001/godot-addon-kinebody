@@ -25,7 +25,7 @@ This is a Godot addon that provides `KineBody2D` and `KineBody3D` nodes, which m
 * macOS
 * Android
 * iOS
-* Web(GDScript only)
+* Web(For C#, please use .NET 9.0 or later)
 
 ## Preuse
 
@@ -91,5 +91,6 @@ They are emitted respectively when the corresponding collision event is invoked.
 
 * 悠鱼/咸鱼/幻灭者001·Yukana(@Lazy-Rabbit-2001): Main programmer and designer, logo designer.
 * Ghostyii: Tutorial author of how to make a sphere-walking character, link [here](https://ghostyii.com/ringworld/).
+* militaryg: Sharing solution of 3D rotation snapping, link [here](https://forum.godotengine.org/t/3d-moving-around-sphere/63674/4).
 * Letterhend Studio: Designer of the font Cyberion Demo.
 * Neale Davidson: Designer of the font Dunkin Sans.
