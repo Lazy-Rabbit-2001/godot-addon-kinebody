@@ -82,6 +82,10 @@ They are emitted respectively when the corresponding collision event is invoked.
 
 #### WIP
 
+## Known issues
+
+Currently, there are no known issues with `KineBody*D`. Meanwhile, the addon is tested only on GodotPhysics2D/3D, which means that it is not guaranteed to work with other physics engines like Jolt3D, Box2D, Rapier, etc. If you find any issues during the use of the addon, please give your feedback in [Issues].
+
 ## Used fonts in logo
 
 * Cyberion Demo
