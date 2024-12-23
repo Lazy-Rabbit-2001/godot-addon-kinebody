@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://dxc76xcp5ki4"
-path="res://.godot/imported/kinebody2d.svg-7dc39f79ef5812a78a88f37f5eae934c.ctex"
+path="res://.godot/imported/KineBody2D.svg-7e640760fa8357e6e769737ee7be8e9d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/kinebody/kinebody2d/kinebody2d.svg"
-dest_files=["res://.godot/imported/kinebody2d.svg-7dc39f79ef5812a78a88f37f5eae934c.ctex"]
+source_file="res://addons/kinebody/kinebody2d/KineBody2D.svg"
+dest_files=["res://.godot/imported/KineBody2D.svg-7e640760fa8357e6e769737ee7be8e9d.ctex"]
 
 [params]
 

@@ -7,3 +7,4 @@ func _physics_process(_delta: float) -> void:
 		jump(600)
 	
 	move_kinebody()
+	print(mass)
