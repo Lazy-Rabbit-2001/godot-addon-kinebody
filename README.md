@@ -15,8 +15,6 @@ This is a Godot addon that provides `KineBody2D` and `KineBody3D` nodes, which m
 
 * Godot: >= 4.3
 * Redot: >= 4.3
-* Wedot: Waiting for release
-* Blazium: Waiting for release
 
 ### Platforms
 
